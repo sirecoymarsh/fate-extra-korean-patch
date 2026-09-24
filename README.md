@@ -2,15 +2,17 @@
 
 PSP 일본판 **Fate/EXTRA (NPJH50247)**용 비공식 한국어 패치입니다. 기본 한국어 패치와 PPSSPP용 선택 HD 리텍스처 팩을 따로 제공합니다.
 
-**[배포 파일과 설치 안내](https://github.com/sirecoymarsh/fate-extra-korean-patch/releases/tag/v8e-hd-v39)**
+**[배포 파일과 설치 안내](https://github.com/sirecoymarsh/fate-extra-korean-patch/releases/tag/v8e-hd-v40)**
 
 ## 이번 변경
 
-기본 v8e와 HD v39에서 **원래 영어였던 UI를 영어로 복원**했습니다. HD의 해상도는 유지했습니다. 원래 일본어였던 UI의 한국어, 대사·설명·자막, 글꼴, 기존 인물·배경 보정은 유지합니다. 새 매핑 때문에 기본 v8e와 HD v39를 함께 사용하세요.
+**HD를 끄면 기본판의 원래 영문 UI, HD를 켜면 교체된 고화질 한국어 UI**가 표시됩니다. 기본 v8e는 그대로이고 HD v40에서 기존 한국어 UI 138개를 다시 연결했습니다. 서번트 카드의 코드·변수명 등 기존에 유지한 영문은 그대로입니다. 글꼴·대사·인물·배경·엔딩의 기존 HD 보정도 유지합니다.
+
+기존 런처에서는 **새 버전 확인 → HD 리팩만 선택 → 선택 항목 설치 / 업데이트**로 적용합니다. 본편 v8e와 런처 1.3.0은 다시 받을 필요가 없습니다. 업데이트는 알림 후 버튼으로 적용합니다.
 
 ## Windows 선택 설치 런처
 
-**[런처 1.3.0 다운로드](https://github.com/sirecoymarsh/fate-extra-korean-patch/releases/download/v8e-hd-v39/Fate-Extra-Korean-Launcher-v1.3.0.zip)**
+**[런처 1.3.0 다운로드](https://github.com/sirecoymarsh/fate-extra-korean-patch/releases/download/v8e-hd-v40/Fate-Extra-Korean-Launcher-v1.3.0.zip)**
 
 ZIP을 전부 풀고 `FateExtraLauncher.exe`를 실행하세요. 본편 한국어 패치·HD 리팩·치트·클리어 세이브를 각각 선택할 수 있습니다. 새 버전은 시작할 때 알림만 표시하며, **설치 / 업데이트 버튼을 눌러야 적용**합니다. 기존 설치 자료는 자동 백업합니다.
 
@@ -24,8 +26,8 @@ ZIP을 전부 풀고 `FateExtraLauncher.exe`를 실행하세요. 본편 한국�
 | --- | --- |
 | `Fate-Extra-Korean-Launcher-v1.3.0.zip` | Windows 선택 설치·업데이트 런처 |
 | `Fate-Extra-Korean-Base-v8e.zip` | 기본 한국어 패치. PSP/PPSSPP 치트 19종과 캐스터 클리어 세이브를 선택 자료로 포함 |
-| `Fate-Extra-Korean-HD-v39.z01` | 선택 HD 전체 팩의 첫 번째 조각 |
-| `Fate-Extra-Korean-HD-v39.zip` | 선택 HD 전체 팩의 마지막 조각 / 압축을 열 파일 |
+| `Fate-Extra-Korean-HD-v40.z01` | 선택 HD 전체 팩의 첫 번째 조각 |
+| `Fate-Extra-Korean-HD-v40.zip` | 선택 HD 전체 팩의 마지막 조각 / 압축을 열 파일 |
 | `INSTALL-ko.txt` | 설치·복원 및 분할 ZIP 사용 안내 |
 
 HD는 **`.z01`과 `.zip`을 둘 다 내려받아 같은 폴더에 놓은 뒤 `.zip`을 열어 전체 압축 해제**하세요. 분할 ZIP을 지원하는 반디집 등으로 풉니다. 각 조각을 따로 풀거나 파일 이름을 바꾸지 마세요. GitHub가 자동으로 만드는 `Source code (zip)`은 패치 배포 파일이 아닙니다.
@@ -51,7 +53,7 @@ HD는 **`.z01`과 `.zip`을 둘 다 내려받아 같은 폴더에 놓은 뒤 `.z
 3. 압축에서 나온 `NPJH50247` 폴더를 `PSP/TEXTURES/`에 넣습니다.
 4. 최종 경로가 `PSP/TEXTURES/NPJH50247/textures.ini`인지 확인하고 PPSSPP에서 텍스처 교체(Replace textures)를 켭니다.
 
-예전 HD 팩이 필요 없는 전체 팩이며, 현재 참조 이미지 26,558개를 포함합니다. 고해상도 대사 글꼴과 HD 전용 이미지 번역·복원은 기본 v8e와 이 팩을 함께 설치해야 표시됩니다. 해상도 설정은 기기 성능에 맞춰 조정하세요. 실기 PSP는 이 PPSSPP 텍스처 팩을 사용할 수 없습니다.
+예전 HD 팩이 필요 없는 전체 팩이며, 현재 참조 이미지 26,457개를 포함합니다. 고해상도 대사 글꼴과 HD 전용 이미지 번역·복원은 기본 v8e와 이 팩을 함께 설치해야 표시됩니다. 해상도 설정은 기기 성능에 맞춰 조정하세요. 실기 PSP는 이 PPSSPP 텍스처 팩을 사용할 수 없습니다.
 
 ## 치트와 클리어 세이브
 
