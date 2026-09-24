@@ -11,6 +11,11 @@ public sealed class DiscoveryResult {
  public List<string> Isos=new List<string>(),Emulators=new List<string>(),Memsticks=new List<string>();
  public Dictionary<string,string> EmulatorMemsticks=new Dictionary<string,string>(StringComparer.OrdinalIgnoreCase);
  public int Directories;public bool Limited;
+ public void Merge(DiscoveryResult other) {
+  foreach(var pair in new[]{Tuple.Create(Isos,other.Isos),Tuple.Create(Emulators,other.Emulators),Tuple.Create(Memsticks,other.Memsticks)})foreach(string p in pair.Item2)if(!pair.Item1.Contains(p,StringComparer.OrdinalIgnoreCase))pair.Item1.Add(p);
+  foreach(var pair in other.EmulatorMemsticks)EmulatorMemsticks[pair.Key]=pair.Value;Directories+=other.Directories;Limited|=other.Limited;
+ }
+ public void Prefer64Bit() {foreach(string p in Emulators.ToArray())if(Path.GetFileName(p).Equals("PPSSPPWindows.exe",StringComparison.OrdinalIgnoreCase)&&Emulators.Contains(Path.Combine(Path.GetDirectoryName(p),"PPSSPPWindows64.exe"),StringComparer.OrdinalIgnoreCase))Emulators.Remove(p);}
 }
 // Read-only discovery. Never executes candidates, follows directory links, or
 // hashes whole disc images during startup. The installer still verifies ISO SHA.
@@ -41,7 +46,7 @@ public sealed class Discovery {
   }catch(IOException){return false;}catch(UnauthorizedAccessException){return false;}catch(ArgumentException){return false;}catch(OverflowException){return false;}
  }
  public static bool IsEmulator(string path) {
-  try {string name=Path.GetFileName(path);if(!name.Equals("PPSSPPWindows64.exe",StringComparison.OrdinalIgnoreCase)&&!name.Equals("PPSSPPWindows.exe",StringComparison.OrdinalIgnoreCase))return false;string assets=Path.Combine(Path.GetDirectoryName(path),"assets");if(!Local(path)||!Plain(path)||!Directory.Exists(assets)||!Plain(assets))return false;using(var f=File.OpenRead(path))return f.ReadByte()=='M'&&f.ReadByte()=='Z';}catch{return false;}
+  try {string name=Path.GetFileName(path);if(!name.Equals("PPSSPPWindows64.exe",StringComparison.OrdinalIgnoreCase)&&!name.Equals("PPSSPPWindows.exe",StringComparison.OrdinalIgnoreCase))return false;string assets=Path.Combine(Path.GetDirectoryName(path),"assets");if(!Local(path)||!Plain(path)||!Directory.Exists(assets)||!Plain(assets))return false;using(var f=File.OpenRead(path)){var dos=ReadAt(f,0,64);if(dos[0]!='M'||dos[1]!='Z')return false;uint pe=U32(dos,60);if(pe<64||pe>1024*1024)return false;return U32(ReadAt(f,pe,4),0)==0x00004550;}}catch{return false;}
  }
  public static string MemoryFor(string exe,string docs) {
   try {if(!Local(exe)||!Plain(exe))return "";string folder=Path.GetDirectoryName(exe),marker=Path.Combine(folder,"installed.txt"),memory;
@@ -56,10 +61,12 @@ public sealed class Discovery {
   try {if(new FileInfo(system).Length>2*1024*1024)return;bool recent=false;int hints=0;foreach(string line in File.ReadLines(system)) {if(!Check())break;string t=line.Trim();if(t.StartsWith("[")){recent=t=="[Recent]";continue;}if(!recent||!t.StartsWith("FileName",StringComparison.Ordinal))continue;int eq=t.IndexOf('=');if(eq<0)continue;string file=t.Substring(eq+1).Trim();if(!Local(file))continue;if(IsOriginalCandidate(file))Add(found.Isos,file);if(++hints<=20)Walk(Path.GetDirectoryName(file),0);}}
   catch(IOException){}catch(UnauthorizedAccessException){}
  }
- static bool Skip(string path) {string n=Path.GetFileName(path);return n.StartsWith(".")||new[]{"Windows","$Recycle.Bin","System Volume Information","node_modules",".git","TEXTURES","SAVEDATA","cache","staging","emulator"}.Contains(n,StringComparer.OrdinalIgnoreCase);}
+ static bool Skip(string path) {string n=Path.GetFileName(path);return n.StartsWith(".")||new[]{"Windows","$Recycle.Bin","System Volume Information","node_modules",".git","TEXTURES","SAVEDATA","cache","staging"}.Contains(n,StringComparer.OrdinalIgnoreCase);}
+ void ProbeMemory(string directory) {if(Path.GetFileName(directory).Equals("PSP",StringComparison.OrdinalIgnoreCase))Memory(Path.GetDirectoryName(directory));}
  void Walk(string root,int depth) {
   if(!Check()||!Local(root)||!Directory.Exists(root)||!Plain(root))return;string full=Path.GetFullPath(root);int previous;if(seen.TryGetValue(full,out previous)&&previous>=depth)return;seen[full]=depth;found.Directories++;
   try {
+   ProbeMemory(root);
    foreach(string p in Directory.EnumerateFiles(root)) {if(!Check())return;string name=Path.GetFileName(p);if(name.Equals("PPSSPPWindows64.exe",StringComparison.OrdinalIgnoreCase)||name.Equals("PPSSPPWindows.exe",StringComparison.OrdinalIgnoreCase))Emulator(p);else if(name.EndsWith(".iso",StringComparison.OrdinalIgnoreCase)&&IsOriginalCandidate(p))Add(found.Isos,p);}
    if(depth>0)foreach(string p in Directory.EnumerateDirectories(root)){if(!Check())return;if(!Skip(p))Walk(p,depth-1);}
   }catch(IOException){}catch(UnauthorizedAccessException){}
@@ -67,7 +74,23 @@ public sealed class Discovery {
  public DiscoveryResult Search(IEnumerable<string> roots,int depth,Settings settings=null) {
   if(settings!=null){if(IsOriginalCandidate(settings.SourceIso))Add(found.Isos,settings.SourceIso);Emulator(settings.Emulator);if(settings.Memstick!="")Memory(settings.Memstick);}
   foreach(string root in roots){if(!Check())break;Walk(root,depth);}
-  return found;
+  found.Prefer64Bit();return found;
+ }
+ public static string[] LocalDrives() {var roots=new List<string>();foreach(var drive in DriveInfo.GetDrives())try{if((drive.DriveType==DriveType.Fixed||drive.DriveType==DriveType.Removable)&&drive.IsReady)roots.Add(drive.RootDirectory.FullName);}catch(IOException){}return roots.ToArray();}
+ public static string[] DeviceRoots(string launcherRoot) {var roots=new List<string>();string path=Path.GetFullPath(launcherRoot);for(int i=0;i<5&&!String.IsNullOrEmpty(path);i++,path=Path.GetDirectoryName(path))roots.Add(path);roots.AddRange(LocalDrives());return roots.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();}
+ // Breadth-first traversal gives every drive an equal chance to reach deep
+ // portable installs. Check only emulator/config names, not every ISO or asset.
+ public DiscoveryResult Devices(IEnumerable<string> roots,int maxDepth=32,Action<int> progress=null) {
+  var visited=new HashSet<string>(StringComparer.OrdinalIgnoreCase);var queue=new Queue<Tuple<string,int>>();foreach(string root in roots)if(Local(root))queue.Enqueue(Tuple.Create(root,0));
+  while(queue.Count>0&&Check()) {
+   var item=queue.Dequeue();string path=item.Item1;if(!Directory.Exists(path)||!Plain(path))continue;string full=Path.GetFullPath(path);if(!visited.Add(full))continue;found.Directories++;
+   try {
+    Emulator(Path.Combine(path,"PPSSPPWindows64.exe"));Emulator(Path.Combine(path,"PPSSPPWindows.exe"));ProbeMemory(path);
+    if(item.Item2<maxDepth)foreach(string child in Directory.EnumerateDirectories(path)) {if(!Check())break;string name=Path.GetFileName(child);if(!Skip(child)&&!new[]{"assets","venv","__pycache__","WinSxS","WindowsApps","KoreanHD","ShaderCache"}.Contains(name,StringComparer.OrdinalIgnoreCase))queue.Enqueue(Tuple.Create(child,item.Item2+1));}
+   }catch(IOException){}catch(UnauthorizedAccessException){}
+   if(progress!=null&&found.Directories%500==0)progress(found.Directories);
+  }
+  found.Prefer64Bit();return found;
  }
  public DiscoveryResult Common(string launcherRoot,Settings settings) {
   var roots=new List<string>{launcherRoot};string profile=Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);

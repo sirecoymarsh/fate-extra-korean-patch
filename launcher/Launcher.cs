@@ -12,7 +12,7 @@ namespace FateLauncher {
 public sealed class LauncherForm : Form {
  readonly string settingsPath,tools,launcherRoot;
  Settings config; ReleaseInfo release; Engine engine; CancellationTokenSource cancel;
- bool busy,preview; TextBox source,emulator,memstick,dataRoot,log;
+ bool busy,preview; Control source,emulator,memstick,dataRoot;TextBox log;DiscoveryResult discoveries;string automaticMemory="";
  Label current,available,message,selectionSummary;
  CheckBox baseBox,hdBox,cheatsBox,saveBox;
  Button check,install,play,stop,autoFind,folderFind; ProgressBar bar; TableLayoutPanel paths,components;
@@ -59,13 +59,23 @@ public sealed class LauncherForm : Form {
  }
  Label Label(string text,Color color) {return new Label{Dock=DockStyle.Fill,Text=text,ForeColor=color,TextAlign=ContentAlignment.MiddleLeft,AutoEllipsis=true};}
  Button Button(string text,Action click) {var b=new Button{Text=text,FlatStyle=FlatStyle.Flat,BackColor=panel,ForeColor=ink,Cursor=Cursors.Hand};b.FlatAppearance.BorderColor=Color.FromArgb(42,83,109);b.Click+=(s,e)=>click();return b;}
- TextBox PathRow(int row,string caption,string value,bool folder,string filter) {
+ Control PathRow(int row,string caption,string value,bool folder,string filter) {
   paths.RowStyles.Add(new RowStyle(SizeType.Percent,25));paths.Controls.Add(Label(caption,muted),0,row);
-  var box=new TextBox{Dock=DockStyle.Fill,Text=value,BackColor=panel,ForeColor=ink,BorderStyle=BorderStyle.FixedSingle,Margin=new Padding(0,8,8,7)};paths.Controls.Add(box,1,row);
+  Control box=row==3?(Control)new TextBox{BorderStyle=BorderStyle.FixedSingle}:new ComboBox{DropDownStyle=ComboBoxStyle.DropDown,DropDownWidth=1000,MaxDropDownItems=12};box.Dock=DockStyle.Fill;box.Text=value;box.BackColor=panel;box.ForeColor=ink;box.Margin=new Padding(0,8,8,7);paths.Controls.Add(box,1,row);
+  if(row==1)((ComboBox)box).SelectionChangeCommitted+=(s,e)=>PairSelectedEmulator();
+  if(row==2){box.TextChanged+=(s,e)=>{automaticMemory="";};((ComboBox)box).SelectionChangeCommitted+=(s,e)=>{automaticMemory="";};}
   var b=Button("찾기…",()=>{
    if(folder){using(var d=new FolderBrowserDialog{Description=caption+"를 선택하세요.",SelectedPath=Directory.Exists(box.Text)?box.Text:""})if(d.ShowDialog(this)==DialogResult.OK)box.Text=d.SelectedPath;}
    else using(var d=new OpenFileDialog{Title=caption+" 선택",Filter=filter,CheckFileExists=true})if(d.ShowDialog(this)==DialogResult.OK){box.Text=d.FileName;if(row==1&&memstick.Text=="")memstick.Text=Discovery.MemoryFor(d.FileName,Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));}
   });b.Dock=DockStyle.Fill;b.Margin=new Padding(0,5,0,5);paths.Controls.Add(b,2,row);return box;
+ }
+ void PairSelectedEmulator() {
+  if(discoveries==null||config.BaseVersion!=""||config.HdVersion!=""||config.CheatsVersion!=""||config.SaveVersion!="")return;
+  string paired;if((memstick.Text==""||memstick.Text==automaticMemory)&&discoveries.EmulatorMemsticks.TryGetValue(emulator.Text,out paired)){memstick.Text=paired;automaticMemory=paired;SetMessage("선택한 PPSSPP의 메모리스틱을 연결했습니다.");}
+ }
+ void ShowCandidates(DiscoveryResult result) {
+  discoveries=result;var boxes=new[]{(ComboBox)source,(ComboBox)emulator,(ComboBox)memstick};var lists=new[]{result.Isos,result.Emulators,result.Memsticks};
+  for(int i=0;i<boxes.Length;i++){string currentText=boxes[i].Text;boxes[i].BeginUpdate();boxes[i].Items.Clear();boxes[i].Items.AddRange(lists[i].Cast<object>().ToArray());boxes[i].Text=currentText;boxes[i].EndUpdate();}
  }
  static string Pick(IWin32Window owner,string title,System.Collections.Generic.List<string> choices) {
   if(choices.Count==0)return "";if(choices.Count==1)return choices[0];using(var dialog=new Form{Text=title,Width=840,Height=280,StartPosition=FormStartPosition.CenterParent,MinimizeBox=false,MaximizeBox=false}) {
@@ -83,11 +93,13 @@ public sealed class LauncherForm : Form {
   if(startup&&source.Text!=""&&emulator.Text!=""&&memstick.Text!="")return;
   cancel=new CancellationTokenSource();Busy(true);try {
    var snapshot=new Settings{SourceIso=source.Text.Trim(),Emulator=emulator.Text.Trim(),Memstick=memstick.Text.Trim()};SetMessage("원본 ISO·PPSSPP·메모리스틱 위치를 찾는 중…");
-   var result=await Task.Run(()=>{var search=new Discovery(cancel.Token,null,chooseFolder?10000:2500,chooseFolder?45:15);return chooseFolder?search.Search(new[]{folder},8,snapshot):search.Common(launcherRoot,snapshot);});
-   FillPaths(result,snapshot);
-   if(!startup){if(snapshot.SourceIso=="")snapshot.SourceIso=Pick(this,"원본 ISO 선택",result.Isos);if(snapshot.Emulator=="")snapshot.Emulator=Pick(this,"PPSSPP 선택",result.Emulators);FillPaths(result,snapshot);if(snapshot.Memstick=="")snapshot.Memstick=Pick(this,"메모리스틱 선택",result.Memsticks);}
-   source.Text=snapshot.SourceIso;emulator.Text=snapshot.Emulator;memstick.Text=snapshot.Memstick;
-   SetMessage("탐색 완료 · 원본 후보 "+result.Isos.Count+"개, PPSSPP "+result.Emulators.Count+"개. "+(result.Limited?"남은 위치는 폴더 안에서 찾기를 사용하세요.":"빈 칸은 자동 찾기 또는 찾기…로 지정하세요."));
+   var result=await Task.Run(()=>{var search=new Discovery(cancel.Token,null,chooseFolder?20000:2500,chooseFolder?45:15);var hits=chooseFolder?search.Search(new[]{folder},16,snapshot):search.Common(launcherRoot,snapshot);
+    if(!chooseFolder&&(hits.Emulators.Count==0||hits.Memsticks.Count==0)){BeginInvoke((Action)(()=>SetMessage("PPSSPP·메모리스틱을 드라이브 안쪽에서 찾는 중… 최대 45초")));var deep=new Discovery(cancel.Token,null,50000,45);hits.Merge(deep.Devices(Discovery.DeviceRoots(launcherRoot)));hits.Prefer64Bit();}return hits;});
+   ShowCandidates(result);bool memoryWasEmpty=snapshot.Memstick=="";
+   FillPaths(result,snapshot);bool memoryInferred=memoryWasEmpty&&snapshot.Memstick!="";
+   if(!startup){if(snapshot.SourceIso=="")snapshot.SourceIso=Pick(this,"원본 ISO 선택",result.Isos);if(snapshot.Emulator=="")snapshot.Emulator=Pick(this,"PPSSPP 선택",result.Emulators);FillPaths(result,snapshot);memoryInferred=memoryWasEmpty&&snapshot.Memstick!="";if(snapshot.Memstick=="")snapshot.Memstick=Pick(this,"메모리스틱 선택",result.Memsticks);}
+   source.Text=snapshot.SourceIso;emulator.Text=snapshot.Emulator;memstick.Text=snapshot.Memstick;if(memoryWasEmpty)automaticMemory=memoryInferred?snapshot.Memstick:"";
+   SetMessage("탐색 완료 · 원본 "+result.Isos.Count+"개, PPSSPP "+result.Emulators.Count+"개, 메모리스틱 "+result.Memsticks.Count+"개. 입력 칸의 ▼에서 선택하세요."+(result.Limited?" 일부 경로는 탐색 한도에 도달했습니다.":""));
   }catch(OperationCanceledException){SetMessage("경로 탐색을 취소했습니다.");}catch(Exception e){SetMessage("경로 탐색: "+e.Message);}finally{Busy(false);cancel.Dispose();cancel=null;}
  }
  CheckBox Option(int column,string caption,string description,bool selected) {
