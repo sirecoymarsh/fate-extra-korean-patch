@@ -14,16 +14,16 @@ public sealed class LauncherForm : Form {
  Settings config; ReleaseInfo release; Engine engine; CancellationTokenSource cancel;
  bool busy,preview,shown,launchSetup,previousExtras,previousBase; Control source,emulator,memstick,dataRoot;TextBox log;DiscoveryResult discoveries;string automaticMemory="";
  Label current,available,message,selectionSummary;
- CheckBox baseBox,hdBox,cheatsBox,saveBox;
- Button check,install,play,stop,autoFind,folderFind; ProgressBar bar; TableLayoutPanel paths,components;
+ CheckBox baseBox,hdBox,uiBox,cheatsBox,saveBox;
+ Button check,install,play,stop,autoFind,folderFind,uiRemove,graphics; ProgressBar bar; TableLayoutPanel paths,components;
  readonly Color bg=Color.FromArgb(9,20,34),panel=Color.FromArgb(17,36,55),ink=Color.FromArgb(224,239,249),muted=Color.FromArgb(152,179,198),cyan=Color.FromArgb(77,220,239);
  public LauncherForm(string root,bool previewMode) {
   preview=previewMode;launcherRoot=root;settingsPath=Path.Combine(root,"launcher-settings.json");tools=Path.Combine(root,"tools");
   config=preview?new Settings():Settings.Load(settingsPath);if(config.DataRoot=="")config.DataRoot=Path.Combine(root,"Data");
-  Text="Fate/EXTRA 한국어 패치 런처";ClientSize=new Size(980,810);MinimumSize=new Size(900,760);StartPosition=FormStartPosition.CenterScreen;
+  Text="Fate/EXTRA 한국어 패치 런처";ClientSize=new Size(1020,840);MinimumSize=new Size(1000,800);StartPosition=FormStartPosition.CenterScreen;
   AutoScaleMode=AutoScaleMode.Dpi;Font=new Font("맑은 고딕",10F);BackColor=bg;ForeColor=ink;
   var outer=new TableLayoutPanel{Dock=DockStyle.Fill,Padding=new Padding(26,18,26,18),ColumnCount=1,RowCount=10};Controls.Add(outer);
-  foreach(float h in new[]{88F,68F,202F,42F,119F,32F,62F,32F})outer.RowStyles.Add(new RowStyle(SizeType.Absolute,h));
+  foreach(float h in new[]{88F,86F,202F,42F,119F,32F,62F,32F})outer.RowStyles.Add(new RowStyle(SizeType.Absolute,h));
   outer.RowStyles.Add(new RowStyle(SizeType.Percent,100));outer.RowStyles.Add(new RowStyle(SizeType.Absolute,26));
   var header=new Panel{Dock=DockStyle.Fill};outer.Controls.Add(header,0,0);
   var brand=new Label{Text="FATE / EXTRA",Font=new Font("Segoe UI",27,FontStyle.Bold),ForeColor=ink,AutoSize=true,Location=new Point(0,0)};header.Controls.Add(brand);
@@ -37,12 +37,14 @@ public sealed class LauncherForm : Form {
   memstick=PathRow(2,"메모리스틱 폴더",config.Memstick,true,"");dataRoot=PathRow(3,"본편·다운로드 폴더",config.DataRoot,true,"");
   var searchRow=new FlowLayoutPanel{Dock=DockStyle.Fill,WrapContents=false};outer.Controls.Add(searchRow,0,3);
   autoFind=Button("경로 자동 찾기",async()=>await FindPaths(false,false));folderFind=Button("폴더 안에서 찾기…",async()=>await FindPaths(false,true));foreach(var b in new[]{autoFind,folderFind}){b.Width=155;b.Height=33;searchRow.Controls.Add(b);}
-  searchRow.Controls.Add(new Label{Text="빈 경로를 채우고, 후보가 여러 개면 선택합니다.",AutoSize=true,ForeColor=muted,Margin=new Padding(12,8,0,0),Font=new Font("맑은 고딕",9)});
+  graphics=Button("그래픽 기본 설정 적용",()=>ApplyGraphics());graphics.Width=192;graphics.Height=33;searchRow.Controls.Add(graphics);
+  uiRemove=Button("UI 한국어화 해제",()=>RemoveUI());uiRemove.Width=170;uiRemove.Height=33;uiRemove.Enabled=false;searchRow.Controls.Add(uiRemove);
   var options=new Panel{Dock=DockStyle.Fill,BackColor=panel,Padding=new Padding(12)};outer.Controls.Add(options,0,4);
   var optionsTitle=new Label{Text="설치할 항목",ForeColor=ink,AutoSize=true,Font=new Font(Font,FontStyle.Bold),Location=new Point(14,10)};options.Controls.Add(optionsTitle);
-  components=new TableLayoutPanel{Dock=DockStyle.Bottom,Height=70,ColumnCount=4,RowCount=2};for(int i=0;i<4;i++)components.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,25));options.Controls.Add(components);
-  baseBox=Option(0,"본편 한국어 패치","원본 ISO로 새 본편 생성",config.SelectBase);hdBox=Option(1,"HD 리팩","선택 · 약 2.1 GB 다운로드",config.SelectHD);
-  cheatsBox=Option(2,"치트","19종 · 모두 꺼진 상태",config.SelectCheats);saveBox=Option(3,"클리어 세이브","캐스터 Lv.52 · DATA80",config.SelectSave);
+  components=new TableLayoutPanel{Dock=DockStyle.Bottom,Height=70,ColumnCount=5,RowCount=2};for(int i=0;i<5;i++)components.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,20));options.Controls.Add(components);
+  baseBox=Option(0,"본편 한국어 패치","원본 ISO로 새 본편 생성",config.SelectBase);hdBox=Option(1,"HD 고화질 팩","원래 영문 UI 유지 · 2.1 GB",config.SelectHD);
+  uiBox=Option(2,"UI 한국어화","아이콘·전투 메시지 · 8.5 MB",config.SelectUI);
+  cheatsBox=Option(3,"치트","치트 사용 켬 · 개별 선택",config.SelectCheats);saveBox=Option(4,"클리어 세이브","캐스터 Lv.52 · DATA80",config.SelectSave);
   selectionSummary=Label("선택한 자료만 설치합니다. 기존 HD·치트·세이브는 자동 백업합니다.",muted);selectionSummary.Font=new Font("맑은 고딕",9);outer.Controls.Add(selectionSummary,0,5);
   var buttons=new FlowLayoutPanel{Dock=DockStyle.Fill,FlowDirection=FlowDirection.LeftToRight,WrapContents=false,Padding=new Padding(0,9,0,4)};outer.Controls.Add(buttons,0,6);
   check=Button("업데이트 확인",()=>CheckLatest());install=Button("선택 항목 설치 / 업데이트",()=>Install());play=Button("게임 실행",()=>Launch());stop=Button("취소",()=>{if(cancel!=null)cancel.Cancel();});
@@ -56,16 +58,16 @@ public sealed class LauncherForm : Form {
   var footer=new Label{Dock=DockStyle.Fill,Text="원본 ISO·에뮬레이터는 별도로 준비하세요. PSP 실기 호환은 미검증입니다.",ForeColor=muted,TextAlign=ContentAlignment.BottomLeft,Font=new Font("맑은 고딕",9)};outer.Controls.Add(footer,0,9);
   RefreshInstalled();FormClosing+=(s,e)=>{if(busy){e.Cancel=true;if(cancel!=null)cancel.Cancel();SetMessage("작업을 취소하고 정리하는 중입니다. 완료 후 창을 닫아 주세요.");}else if(!preview){try{CaptureSettings();Json.Write(settingsPath,config);}catch{}}};
   previousExtras=cheatsBox.Checked||saveBox.Checked;previousBase=baseBox.Checked;
-  foreach(var option in new[]{baseBox,hdBox,cheatsBox,saveBox})option.CheckedChanged+=SelectionChanged;
+  foreach(var option in new[]{baseBox,hdBox,uiBox,cheatsBox,saveBox})option.CheckedChanged+=SelectionChanged;
   RefreshPathRequirements();
-  if(!preview)Shown+=async(s,e)=>{shown=true;await FindPaths(true,false);CheckLatest();};else{available.Text="새 버전  v8e + HD v39\n업데이트 버튼으로 적용";current.Text="설치됨  본편 v8d · HD v38\n치트 미설치 · 클리어 세이브 미설치";log.Text="선택한 설치 항목에 필요한 경로만 확인합니다.\r\n치트·클리어 세이브를 선택하면 PPSSPP·메모리스틱 자동 탐색을 시작합니다.";}
+  if(!preview)Shown+=async(s,e)=>{shown=true;await FindPaths(true,false);CheckLatest();};else{available.Text="배포 중  v8e + HD-v39 + UI-v1\n한국어 UI는 선택해서 설치";current.Text="본편 v8e · HD HD-v39\nUI 한국어화 미설치\n치트 미설치 · 클리어 세이브 미설치";log.Text="선택한 설치 항목에 필요한 경로만 확인합니다.\r\n치트·클리어 세이브를 선택하면 PPSSPP·메모리스틱 자동 탐색을 시작합니다.";}
  }
  void RefreshPathRequirements() {
-  bool extras=cheatsBox.Checked||saveBox.Checked;bool memory=extras||hdBox.Checked||launchSetup;
+  bool extras=cheatsBox.Checked||saveBox.Checked;bool memory=extras||hdBox.Checked||uiBox.Checked||launchSetup;
   bool[] enabled={baseBox.Checked,extras||launchSetup,memory,true};
   for(int row=0;row<4;row++)for(int col=0;col<3;col++)paths.GetControlFromPosition(col,row).Enabled=enabled[row];
   autoFind.Enabled=folderFind.Enabled=!busy&&(baseBox.Checked||extras||launchSetup);
-  selectionSummary.Text=extras?"치트·세이브 설치에는 메모리스틱이 필요합니다. PPSSPP는 위치를 찾을 때 사용합니다.":hdBox.Checked?"HD를 설치할 메모리스틱 폴더를 지정하세요. PPSSPP 실행 파일은 필요하지 않습니다.":baseBox.Checked?"본편 설치에는 원본 ISO만 필요합니다. PPSSPP·메모리스틱은 찾지 않습니다.":"설치할 항목을 선택하세요.";
+  selectionSummary.Text=extras?"치트·세이브 설치에는 메모리스틱이 필요합니다. PPSSPP는 위치를 찾을 때 사용합니다.":uiBox.Checked?"UI 한국어화는 선택 사항입니다. 처음 설치할 때 HD 고화질 팩도 함께 선택하세요.":hdBox.Checked?"HD 고화질 팩만 설치하면 원래 영문 UI를 유지합니다. 설치할 메모리스틱을 지정하세요.":baseBox.Checked?"본편 설치에는 원본 ISO만 필요합니다. PPSSPP·메모리스틱은 찾지 않습니다.":"설치할 항목을 선택하세요.";
  }
  async void SelectionChanged(object sender,EventArgs e) {
   bool extras=cheatsBox.Checked||saveBox.Checked;
@@ -86,7 +88,7 @@ public sealed class LauncherForm : Form {
   });b.Dock=DockStyle.Fill;b.Margin=new Padding(0,5,0,5);paths.Controls.Add(b,2,row);return box;
  }
  void PairSelectedEmulator() {
-  if(discoveries==null||config.BaseVersion!=""||config.HdVersion!=""||config.CheatsVersion!=""||config.SaveVersion!="")return;
+  if(discoveries==null||config.BaseVersion!=""||config.HdVersion!=""||config.UiVersion!=""||config.CheatsVersion!=""||config.SaveVersion!="")return;
   string paired;if((memstick.Text==""||memstick.Text==automaticMemory)&&discoveries.EmulatorMemsticks.TryGetValue(emulator.Text,out paired)){memstick.Text=paired;automaticMemory=paired;SetMessage("선택한 PPSSPP의 메모리스틱을 연결했습니다.");}
  }
  void ShowCandidates(DiscoveryResult result,bool isos,bool devices) {
@@ -125,27 +127,40 @@ public sealed class LauncherForm : Form {
   var note=Label(description,muted);note.Font=new Font("맑은 고딕",8.5F);components.Controls.Add(note,column,1);return b;
  }
  void CaptureSettings() {
-  bool installed=config.BaseVersion!=""||config.HdVersion!=""||config.CheatsVersion!=""||config.SaveVersion!=""||File.Exists(Path.Combine(config.DataRoot,"install-journal.json"));
+  bool installed=config.BaseVersion!=""||config.HdVersion!=""||config.UiVersion!=""||config.CheatsVersion!=""||config.SaveVersion!=""||File.Exists(Path.Combine(config.DataRoot,"install-journal.json"));
   string next=Path.GetFullPath(dataRoot.Text.Trim());if(installed&&!String.Equals(next,config.DataRoot,StringComparison.OrdinalIgnoreCase))throw new Exception("설치한 본편 폴더는 여기서 옮길 수 없습니다. 새 폴더에서 런처를 따로 시작하세요.");
   string memory=memstick.Text.Trim();if(installed&&config.Memstick!=""&&!String.Equals(memory,config.Memstick,StringComparison.OrdinalIgnoreCase))throw new Exception("설치한 메모리스틱 폴더는 여기서 옮길 수 없습니다. 새 폴더에서 런처를 따로 시작하세요.");
   config.SourceIso=source.Text.Trim();config.Emulator=emulator.Text.Trim();config.Memstick=memory;
-  config.DataRoot=next;config.SelectBase=baseBox.Checked;config.SelectHD=hdBox.Checked;config.SelectCheats=cheatsBox.Checked;config.SelectSave=saveBox.Checked;
+  config.DataRoot=next;config.SelectBase=baseBox.Checked;config.SelectHD=hdBox.Checked;config.SelectUI=uiBox.Checked;config.SelectCheats=cheatsBox.Checked;config.SelectSave=saveBox.Checked;
  }
  Engine EngineForWork() {CaptureSettings();Json.Write(settingsPath,config);var e=new Engine(config,settingsPath,tools);e.RecoverPending();config=e.Config;e.Progress=(s,p)=>{if(!IsDisposed)BeginInvoke((Action)(()=>{SetMessage(s);if(p>=0){bar.Style=ProgressBarStyle.Continuous;bar.Value=Math.Max(0,Math.Min(100,p));}else bar.Style=ProgressBarStyle.Marquee;}));};e.Cancel=cancel.Token;return e;}
  string V(string s){return s==""?"미설치":s;}
- void RefreshInstalled(){current.Text="본편 "+V(config.BaseVersion)+"  ·  HD "+V(config.HdVersion)+"\n치트 "+V(config.CheatsVersion)+"  ·  클리어 세이브 "+V(config.SaveVersion);if(play!=null)play.Enabled=!busy&&File.Exists(config.GameIso);}
+ void RefreshInstalled(){current.Text="본편 "+V(config.BaseVersion)+" · HD "+V(config.HdVersion)+"\nUI 한국어화 "+(config.UiVersion==""&&config.HdVersion=="HD-v40"?"통합 v40":V(config.UiVersion))+"\n치트 "+V(config.CheatsVersion)+"  ·  클리어 세이브 "+V(config.SaveVersion);if(play!=null)play.Enabled=!busy&&File.Exists(config.GameIso);}
  void SetMessage(string s){if(message.Text!=s){message.Text=s;log.AppendText(DateTime.Now.ToString("HH:mm")+"  "+s+Environment.NewLine);}}
- void Busy(bool value){busy=value;check.Enabled=!value;install.Enabled=!value&&release!=null;play.Enabled=!value&&File.Exists(config.GameIso);stop.Enabled=value;paths.Enabled=!value;components.Enabled=!value;RefreshPathRequirements();if(!value){bar.Style=ProgressBarStyle.Continuous;RefreshInstalled();}}
+ void Busy(bool value){busy=value;check.Enabled=!value;install.Enabled=!value&&release!=null;play.Enabled=!value&&File.Exists(config.GameIso);stop.Enabled=value;graphics.Enabled=!value;uiRemove.Enabled=!value&&release!=null;paths.Enabled=!value;components.Enabled=!value;RefreshPathRequirements();if(!value){bar.Style=ProgressBarStyle.Continuous;RefreshInstalled();}}
  async void CheckLatest() {
   if(busy)return;cancel=new CancellationTokenSource();Busy(true);
-  try{engine=EngineForWork();SetMessage("GitHub 새 버전 확인 중…");release=await Task.Run(()=>engine.Latest());available.Text="배포 중  "+release.BaseVersion+" + "+release.HdVersion+"\n"+((config.BaseVersion==release.BaseVersion&&(!config.SelectHD||config.HdVersion==release.HdVersion))?"선택한 설치 버전이 최신입니다.":"선택 항목 설치 / 업데이트 버튼으로 적용");SetMessage("확인 완료. 설치할 항목을 고른 뒤 업데이트 버튼을 눌러 주세요.");}
+  try{engine=EngineForWork();SetMessage("GitHub 새 버전 확인 중…");release=await Task.Run(()=>engine.Latest());available.Text="배포 중  "+release.BaseVersion+" + "+release.HdVersion+" + "+release.UiVersion+"\n"+((config.BaseVersion==release.BaseVersion&&(!config.SelectHD||config.HdVersion==release.HdVersion)&&(!config.SelectUI||config.UiVersion==release.UiVersion))?"선택한 설치 버전이 최신입니다.":"선택 항목 설치 / 업데이트 버튼으로 적용");SetMessage("확인 완료. 설치할 항목을 고른 뒤 업데이트 버튼을 눌러 주세요.");}
   catch(Exception e){available.Text="새 버전을 확인하지 못했습니다.";SetMessage(e is OperationCanceledException?"확인을 취소했습니다.":e.Message+"  기존 설치본은 실행할 수 있습니다.");}
   finally{Busy(false);cancel.Dispose();cancel=null;}
  }
  async void Install() {
   if(busy||release==null)return;cancel=new CancellationTokenSource();Busy(true);
-  try{engine=EngineForWork();bool b=baseBox.Checked,h=hdBox.Checked,c=cheatsBox.Checked,s=saveBox.Checked;await Task.Run(()=>engine.Install(release,b,h,c,s));config=engine.Config;RefreshInstalled();SetMessage("설치 완료. 게임 실행 버튼으로 시작하세요.");}
+  try{engine=EngineForWork();bool b=baseBox.Checked,h=hdBox.Checked,c=cheatsBox.Checked,s=saveBox.Checked,u=uiBox.Checked;await Task.Run(()=>engine.Install(release,b,h,c,s,u));config=engine.Config;RefreshInstalled();SetMessage("설치 완료. 게임 실행 버튼으로 시작하세요.");}
   catch(Exception e){if(engine!=null)config=engine.Config;SetMessage(e is OperationCanceledException?"취소했습니다. 받은 데이터는 다음에 이어받습니다.":e.Message);}
+  finally{Busy(false);cancel.Dispose();cancel=null;}
+ }
+ async void RemoveUI() {
+  if(busy||release==null)return;cancel=new CancellationTokenSource();Busy(true);
+  try{engine=EngineForWork();await Task.Run(()=>engine.Install(release,false,false,false,false,false,true));config=engine.Config;uiBox.Checked=false;config.SelectUI=false;Json.Write(settingsPath,config);SetMessage("원래 영문 UI로 복원했습니다. HD 화질은 유지됩니다.");}
+  catch(Exception e){if(engine!=null)config=engine.Config;SetMessage(e.Message);}
+  finally{Busy(false);cancel.Dispose();cancel=null;}
+ }
+ async void ApplyGraphics() {
+  if(busy)return;launchSetup=true;RefreshPathRequirements();if(memstick.Text.Trim()==""){SetMessage("설정을 적용할 메모리스틱 폴더를 지정한 뒤 다시 누르세요.");return;}
+  cancel=new CancellationTokenSource();Busy(true);
+  try{engine=EngineForWork();await Task.Run(()=>engine.ConfigureDefaults());config=engine.Config;SetMessage("Fate/EXTRA 설정 적용: 8배 · MSAA 4배 · 수직동기화 · 텍스처 교체. 설치된 치트는 목록에서 선택하세요.");}
+  catch(Exception e){if(engine!=null)config=engine.Config;SetMessage(e.Message);}
   finally{Busy(false);cancel.Dispose();cancel=null;}
  }
  async void Launch() {

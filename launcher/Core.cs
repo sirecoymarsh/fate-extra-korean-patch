@@ -30,7 +30,8 @@ public static class Json {
 public sealed class Settings {
  public string SourceIso="", Emulator="", Memstick="", DataRoot="";
  public string BaseVersion="", HdVersion="", HdBaseVersion="", CheatsVersion="", SaveVersion="", GameIso="";
- public bool SelectBase=true, SelectHD=false, SelectCheats=false, SelectSave=false;
+ public string UiVersion="";
+ public bool SelectBase=true, SelectHD=false, SelectUI=false, SelectCheats=false, SelectSave=false, GraphicsDefaultsApplied=false;
  public static Settings Load(string p) { return File.Exists(p)?Json.Serializer().Deserialize<Settings>(File.ReadAllText(p)):new Settings(); }
 }
 public sealed class Asset {
@@ -44,7 +45,8 @@ public sealed class Asset {
 }
 public sealed class ReleaseInfo {
  public string Tag,BaseVersion,HdVersion,BaseRoot,HdRoot,PatchName,TargetHash,HdIniHash; public long TargetBytes;
- public Asset Base; public Asset[] Hd;
+ public Asset Base,Ui; public Asset[] Hd;
+ public string UiVersion="",UiRoot="",UiOriginalHash="",UiKoreanHash="";
  public static ReleaseInfo Read(string json,string tag) {
   var d=Json.Parse(json);
   if(Json.N(d,"schema")!=1 || Json.S(d,"repository")!=Engine.Repository || Json.S(d,"release_tag")!=tag)throw new Exception("이 런처에서 지원하지 않는 업데이트 정보입니다.");
@@ -57,6 +59,11 @@ public sealed class ReleaseInfo {
   r.HdIniHash=Json.S(d,"hd_textures_ini_sha256").ToUpperInvariant();if(!Regex.IsMatch(r.HdIniHash,"^[0-9A-F]{64}$"))throw new Exception("HD 매핑 정보 오류");
   r.Base=Asset.Read(Json.Map(d["base_asset"]),tag);r.Hd=Json.A(d,"hd_assets").Select(x=>Asset.Read(Json.Map(x),tag)).ToArray();
   if(r.Hd.Length<1||r.Hd.Length>12||r.Hd.Select(a=>a.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count()!=r.Hd.Length||r.Hd.Count(a=>a.Name.EndsWith(".zip",StringComparison.OrdinalIgnoreCase))!=1)throw new Exception("HD 분할 파일 정보 오류");
+  if(d.ContainsKey("ui_asset")) {
+   r.Ui=Asset.Read(Json.Map(d["ui_asset"]),tag);r.UiVersion=Json.S(d,"ui_version");r.UiRoot=Json.S(d,"ui_root");r.UiOriginalHash=Json.S(d,"ui_original_ini_sha256");r.UiKoreanHash=Json.S(d,"ui_korean_ini_sha256");
+   foreach(string s in new[]{r.UiVersion,r.UiRoot}){Engine.SafeRelative(s);if(s.IndexOfAny(new[]{'/','\\'})>=0)throw new Exception("UI 팩 이름 오류");}
+   if(!Regex.IsMatch(r.UiOriginalHash,"^[0-9A-F]{64}$")||!Regex.IsMatch(r.UiKoreanHash,"^[0-9A-F]{64}$")||r.UiOriginalHash!=r.HdIniHash)throw new Exception("UI 팩 매핑 정보 오류");
+  }
   return r;
  }
 }
@@ -67,13 +74,14 @@ public sealed class Journal {
  public string PreviousSettings; public bool Committed; public List<Swap> Operations=new List<Swap>();
 }
 public sealed class Engine {
- public const string Version="1.3.0",Repository="sirecoymarsh/fate-extra-korean-patch";
+ public const string Version="1.4.0",Repository="sirecoymarsh/fate-extra-korean-patch";
  public const string ReleaseRoot="https://github.com/"+Repository+"/releases/download/";
  public const string SourceHash="60399D610CBCDA96601374A2E621A22BB58505C403C6FA4221EEC5E87235667B";
  public const long SourceSize=1280933888;
  public readonly string Root,ConfigPath,ToolRoot;
  public Settings Config; public Action<string,int> Progress;
  public CancellationToken Cancel;
+ internal Func<bool> RunningCheck=GameRunning;
  public Engine(Settings c,string configPath,string toolRoot) { Config=c;ConfigPath=Path.GetFullPath(configPath);ToolRoot=Path.GetFullPath(toolRoot);Root=Path.GetFullPath(c.DataRoot);if(Root==Path.GetPathRoot(Root))throw new Exception("본편 폴더로 드라이브 전체를 지정할 수 없습니다.");NoLinkParents(Root);Directory.CreateDirectory(Root); }
  public static string Hash(string path) { using(var s=File.OpenRead(path))using(var h=SHA256.Create())return BitConverter.ToString(h.ComputeHash(s)).Replace("-",""); }
  public static void Verify(string p,long bytes,string hash) { if(!File.Exists(p)||new FileInfo(p).Length!=bytes||Hash(p)!=hash.ToUpperInvariant())throw new Exception("파일이 손상되었거나 지원 파일과 다릅니다: "+Path.GetFileName(p)); }
@@ -111,7 +119,7 @@ public sealed class Engine {
     res.EnsureSuccessStatusCode();using(var stream=res.Content.ReadAsStreamAsync().GetAwaiter().GetResult())using(var ms=new MemoryStream()) {
      var buf=new byte[8192];int n;while((n=stream.ReadAsync(buf,0,buf.Length,timeout.Token).GetAwaiter().GetResult())>0){if(ms.Length+n>2*1024*1024)throw new Exception("업데이트 정보 크기 초과");ms.Write(buf,0,n);}
      var r=ReleaseInfo.Read(Encoding.UTF8.GetString(ms.ToArray()).TrimStart('\uFEFF'),tag);
-     foreach(var a in new[]{r.Base}.Concat(r.Hd)) { var remote=assets.SingleOrDefault(x=>Json.S(x,"name")==a.Name);if(remote==null||Json.N(remote,"size")!=a.Size)throw new Exception("릴리스 파일이 아직 준비되지 않았습니다: "+a.Name); }
+     foreach(var a in new[]{r.Base}.Concat(r.Hd).Concat(r.Ui==null?new Asset[0]:new[]{r.Ui})) { var remote=assets.SingleOrDefault(x=>Json.S(x,"name")==a.Name);if(remote==null||Json.N(remote,"size")!=a.Size)throw new Exception("릴리스 파일이 아직 준비되지 않았습니다: "+a.Name); }
      return r;
     }
    }
@@ -158,6 +166,7 @@ public sealed class Engine {
   }
   if(!File.Exists(exe)||!Directory.Exists(Path.Combine(runtime,"assets")))throw new Exception("런처 내부 PPSSPP 복사본이 불완전합니다. 본편 폴더의 emulator 폴더를 옮긴 뒤 다시 실행해 주세요.");
   File.WriteAllText(Path.Combine(runtime,"installed.txt"),Path.GetFullPath(Config.Memstick),new UTF8Encoding(false));
+  if(!Config.GraphicsDefaultsApplied)ConfigureDefaults();
   return new ProcessStartInfo(exe,Quote(Config.GameIso)){UseShellExecute=false,WorkingDirectory=runtime};
  }
  string Tool(string name) {
@@ -188,7 +197,7 @@ public sealed class Engine {
   foreach(string p in Directory.GetDirectories(source)){NoLinks(p);CopyDirectory(p,Path.Combine(dest,Path.GetFileName(p)));}
  }
  string JournalPath { get {return Path.Combine(Root,"install-journal.json");} }
- public void RecoverPending() { if(!File.Exists(JournalPath))return;if(GameRunning())throw new Exception("이전 설치 복원이 필요합니다. PPSSPP를 종료해 주세요.");using(var gate=new FileStream(Path.Combine(Root,"install.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None))Recover(); }
+ public void RecoverPending() { if(!File.Exists(JournalPath))return;if(RunningCheck())throw new Exception("이전 설치 복원이 필요합니다. PPSSPP를 종료해 주세요.");using(var gate=new FileStream(Path.Combine(Root,"install.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None))Recover(); }
  void Allowed(string path) { if(!Under(path,Root)&&!(Config.Memstick!=""&&Under(path,Config.Memstick)))throw new Exception("설치 대상 폴더 밖의 작업을 거부했습니다."); }
  public void Recover() {
   if(!File.Exists(JournalPath))return;var j=Json.Serializer().Deserialize<Journal>(File.ReadAllText(JournalPath));
@@ -207,23 +216,43 @@ public sealed class Engine {
   try {if(Directory.Exists(src))CopyDirectory(src,staged);else File.Copy(src,staged);}catch{if(Exists(staged))DeleteTree(staged,parent);throw;}
   return new Swap{Target=target,Staged=staged,Backup=backup,HadOld=Exists(target)};
  }
- void PrepareHdSetting(Journal journal,string ini,string stage,string id) {
-  NoLinkParents(ini);string text=File.Exists(ini)?File.ReadAllText(ini):"[Graphics]\r\n";
-  if(Regex.IsMatch(text,@"(?m)^ReplaceTextures\s*="))text=Regex.Replace(text,@"(?m)^ReplaceTextures\s*=.*$","ReplaceTextures = True");
-  else if(Regex.IsMatch(text,@"(?m)^\[Graphics\]\s*$"))text=Regex.Replace(text,@"(?m)^\[Graphics\]\s*$","[Graphics]\r\nReplaceTextures = True");
-  else text+="\r\n[Graphics]\r\nReplaceTextures = True\r\n";
-  File.WriteAllText(stage,text,new UTF8Encoding(false));journal.Operations.Add(Prepare(ini,stage,id));
+ void PrepareGameSetting(Journal journal,string psp,string work,string id,bool graphics,bool cheats) {
+  string ini=Path.Combine(psp,"SYSTEM","NPJH50247_ppsspp.ini"),global=Path.Combine(psp,"SYSTEM","ppsspp.ini"),controls=Path.Combine(psp,"SYSTEM","controls.ini");
+  NoLinkParents(ini);NoLinkParents(global);NoLinkParents(controls);
+  string text=File.Exists(ini)?File.ReadAllText(ini):File.Exists(global)?File.ReadAllText(global):"";
+  if(!File.Exists(ini)&&File.Exists(controls)&&!Regex.IsMatch(text,@"(?mi)^\s*\[ControlMapping\]\s*$"))text+="\r\n"+File.ReadAllText(controls);
+  text=PpssppSettings.Preset(text,graphics,cheats);string stage=Path.Combine(work,"game-settings.ini");File.WriteAllText(stage,text,new UTF8Encoding(false));journal.Operations.Add(Prepare(ini,stage,id));
  }
- public void Install(ReleaseInfo r,bool installBase,bool installHD,bool installCheats,bool installSave) {
+ public void ConfigureDefaults() {
+  RecoverPending();Check();if(RunningCheck())throw new Exception("PPSSPP를 종료한 뒤 설정을 적용하세요.");
+  if(String.IsNullOrWhiteSpace(Config.Memstick))throw new Exception("메모리스틱 폴더를 지정하세요.");
+  Config.Memstick=Path.GetFullPath(Config.Memstick);NoLinkParents(Config.Memstick);if(Config.Memstick==Path.GetPathRoot(Config.Memstick))throw new Exception("메모리스틱 폴더를 지정하세요.");
+  using(var gate=new FileStream(Path.Combine(Root,"install.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)) {
+   Recover();string id=Guid.NewGuid().ToString("N"),work=Path.Combine(Root,"staging",id);Directory.CreateDirectory(work);
+   var j=new Journal{PreviousSettings=Json.Serializer().Serialize(Config)};bool written=false;
+   try {
+    string psp=PspRoot(Config.Memstick);PrepareGameSetting(j,psp,work,id,true,File.Exists(Path.Combine(psp,"Cheats","NPJH50247.ini")));
+    Check();if(RunningCheck())throw new Exception("PPSSPP를 종료하세요.");Json.Write(JournalPath,j);written=true;
+    foreach(var op in j.Operations){if(op.HadOld)Move(op.Target,op.Backup);Move(op.Staged,op.Target);}
+    Config.GraphicsDefaultsApplied=true;Json.Write(ConfigPath,Config);j.Committed=true;Json.Write(JournalPath,j);File.Delete(JournalPath);
+   }catch{if(written){Rollback(j);Config=Json.Serializer().Deserialize<Settings>(j.PreviousSettings);Json.Write(ConfigPath,Config);File.Delete(JournalPath);}throw;}
+   finally{foreach(var op in j.Operations)if(Exists(op.Staged))DeleteTree(op.Staged,Path.GetDirectoryName(op.Staged));DeleteTree(work,Path.Combine(Root,"staging"));}
+  }
+ }
+ public void Install(ReleaseInfo r,bool installBase,bool installHD,bool installCheats,bool installSave,bool installUI=false,bool removeUI=false) {
   RecoverPending();
   Check();
-  if(!installBase&&!installHD&&!installCheats&&!installSave)throw new Exception("설치할 항목을 선택하세요.");
-  if(GameRunning())throw new Exception("PPSSPP를 종료한 뒤 업데이트해 주세요.");
-  if((installHD||installCheats||installSave)&&String.IsNullOrWhiteSpace(Config.Memstick))throw new Exception("PPSSPP 메모리스틱 폴더를 지정해 주세요.");
+  if(!installBase&&!installHD&&!installCheats&&!installSave&&!installUI&&!removeUI)throw new Exception("설치할 항목을 선택하세요.");
+  if(RunningCheck())throw new Exception("PPSSPP를 종료한 뒤 업데이트해 주세요.");
+  if((installHD||installCheats||installSave||installUI||removeUI)&&String.IsNullOrWhiteSpace(Config.Memstick))throw new Exception("PPSSPP 메모리스틱 폴더를 지정해 주세요.");
   if(Config.Memstick!="") { Config.Memstick=Path.GetFullPath(Config.Memstick);NoLinkParents(Config.Memstick);if(Path.GetPathRoot(Config.Memstick)==Config.Memstick)throw new Exception("드라이브 전체를 메모리스틱으로 지정할 수 없습니다."); }
-  if(installHD&&!installBase&&Config.BaseVersion!=r.BaseVersion)throw new Exception("이 HD 팩과 맞는 본편 패치도 함께 선택해 주세요.");
+  if((installHD||installUI||removeUI)&&!installBase&&Config.BaseVersion!=r.BaseVersion)throw new Exception("이 HD 팩과 맞는 본편 패치도 함께 선택해 주세요.");
   string psp=Config.Memstick==""?"":PspRoot(Config.Memstick);string existingHD=Path.Combine(psp,"TEXTURES","NPJH50247");
-  if(installBase&&!installHD&&Config.Memstick!=""&&Directory.Exists(existingHD)) {string ini=Path.Combine(existingHD,"textures.ini");NoLinkParents(ini);if(!File.Exists(ini)||Hash(ini)!=r.HdIniHash)throw new Exception("이 메모리스틱의 기존 HD 팩과 새 본편의 조합을 확인할 수 없습니다. HD도 함께 선택하거나 HD가 없는 별도 메모리스틱 폴더를 지정해 주세요.");}
+  if(installBase&&!installHD&&Config.Memstick!=""&&Directory.Exists(existingHD)) {string ini=Path.Combine(existingHD,"textures.ini");NoLinkParents(ini);if(!File.Exists(ini)||(Hash(ini)!=r.HdIniHash&&Hash(ini)!=r.UiKoreanHash))throw new Exception("이 메모리스틱의 기존 HD 팩과 새 본편의 조합을 확인할 수 없습니다. HD도 함께 선택하거나 HD가 없는 별도 메모리스틱 폴더를 지정해 주세요.");}
+  if(installUI&&removeUI)throw new Exception("UI 설치와 해제를 동시에 선택할 수 없습니다.");
+  bool useUI=installUI||(installHD&&!removeUI&&Config.UiVersion!="");
+  bool changeUI=useUI||removeUI;
+  if(changeUI&&r.Ui==null)throw new Exception("이 배포에는 선택 UI 한국어화가 없습니다.");
   if(installBase){Say("원본 ISO 확인");if(Config.SourceIso=="")throw new Exception("보유한 일본판 원본 ISO를 지정해 주세요.");Verify(Config.SourceIso,SourceSize,SourceHash);}
   using(var gate=new FileStream(Path.Combine(Root,"install.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)) {
    Recover();string id=DateTime.UtcNow.ToString("yyyyMMddHHmmss")+"-"+Guid.NewGuid().ToString("N").Substring(0,8);string work=Path.Combine(Root,"staging",id);Directory.CreateDirectory(work);
@@ -240,23 +269,34 @@ public sealed class Engine {
      Check();Say("본편 패치 적용 중 · 원본은 보존됩니다");string iso=Path.Combine(work,"game.iso");Run(Tool("xdelta3.exe"),"-d -s "+Quote(Config.SourceIso)+" "+Quote(patch)+" "+Quote(iso));Say("완성된 본편 확인");Verify(iso,r.TargetBytes,r.TargetHash);
      j.Operations.Add(Prepare(Path.Combine(Root,"games","Fate-Extra-Korean-"+r.BaseVersion+".iso"),iso,id));
     }
+    string textureStage="";
     if(installHD) {
      string archive="";foreach(var a in r.Hd){string path=Download(a,r.Tag);if(a.Name.EndsWith(".zip",StringComparison.OrdinalIgnoreCase))archive=path;}
      string extracted=Path.Combine(work,"hd");Extract(archive,extracted,r.HdRoot);string hdRoot=Path.Combine(extracted,r.HdRoot);var hm=Json.Parse(File.ReadAllText(Path.Combine(hdRoot,"manifest.json")));
      if(Json.S(hm,"base_iso_sha256")!=r.TargetHash||Json.S(hm,"base_version")!=r.BaseVersion)throw new Exception("본편과 HD 버전이 다릅니다.");
      foreach(var f in Json.Map(hm["files"])) {SafeRelative(f.Key);string path=Path.Combine(hdRoot,f.Key.Replace('/',Path.DirectorySeparatorChar));if(!File.Exists(path)||new FileInfo(path).Length!=Json.N(Json.Map(f.Value),"bytes"))throw new Exception("HD 파일 누락: "+f.Key);}
-     j.Operations.Add(Prepare(Path.Combine(psp,"TEXTURES","NPJH50247"),Path.Combine(hdRoot,"NPJH50247"),id));
-     PrepareHdSetting(j,Path.Combine(psp,"SYSTEM","ppsspp.ini"),Path.Combine(work,"ppsspp.ini"),id);
-     string gameIni=Path.Combine(psp,"SYSTEM","NPJH50247_ppsspp.ini");if(File.Exists(gameIni))PrepareHdSetting(j,gameIni,Path.Combine(work,"game-ppsspp.ini"),id);
+     textureStage=Path.Combine(hdRoot,"NPJH50247");if(Hash(Path.Combine(textureStage,"textures.ini"))!=r.HdIniHash)throw new Exception("HD 매핑 검증 실패");
     }
+    if(changeUI) {
+     string archive=Download(r.Ui,r.Tag),extracted=Path.Combine(work,"ui");Extract(archive,extracted,r.UiRoot);
+     var ui=new UiPack(Path.Combine(extracted,r.UiRoot),r);string target=installHD?textureStage:existingHD;ui.ValidateInstalled(target);
+     foreach(var f in ui.FilesFor(target,useUI)) {
+      if(installHD){string dest=Path.Combine(textureStage,f.Key);Directory.CreateDirectory(Path.GetDirectoryName(dest));File.Copy(f.Value,dest,true);}
+      else j.Operations.Add(Prepare(Path.Combine(existingHD,f.Key),f.Value,id));
+     }
+    }
+    if(installHD)j.Operations.Add(Prepare(existingHD,textureStage,id));
+    if(installHD||changeUI||installCheats)PrepareGameSetting(j,psp,work,id,installHD||changeUI||!Config.GraphicsDefaultsApplied,installCheats);
     if(installCheats||installSave)j.Operations.Add(Prepare(Path.Combine(Root,"Extras",r.BaseVersion),Path.Combine(packDir,"Extras"),id));
     if(installCheats) {string src=Path.Combine(packDir,"Extras","Cheats","PPSSPP","NPJH50247.ini");if(Regex.IsMatch(File.ReadAllText(src),@"(?m)^_C[12] "))throw new Exception("켜진 치트가 포함되어 있습니다.");j.Operations.Add(Prepare(Path.Combine(psp,"Cheats","NPJH50247.ini"),src,id));}
     if(installSave) {string src=Path.Combine(packDir,"Extras","Clear-Save","NPJH50247DATA80");foreach(string f in new[]{"PARAM.SFO","ICON0.PNG","PIC1.PNG","SECURE.BIN"})if(!File.Exists(Path.Combine(src,f)))throw new Exception("클리어 세이브 파일 누락");j.Operations.Add(Prepare(Path.Combine(psp,"SAVEDATA","NPJH50247DATA80"),src,id));}
-    Check();if(GameRunning())throw new Exception("PPSSPP가 실행되어 적용을 미뤘습니다. 종료 후 다시 눌러 주세요.");
+    Check();if(RunningCheck())throw new Exception("PPSSPP가 실행되어 적용을 미뤘습니다. 종료 후 다시 눌러 주세요.");
     Say("설치 적용 중 · 기존 파일은 옆에 백업됩니다");Json.Write(JournalPath,j);journalWritten=true;
     foreach(var op in j.Operations){if(op.HadOld)Move(op.Target,op.Backup);Move(op.Staged,op.Target);}
     if(installBase){Config.BaseVersion=r.BaseVersion;Config.GameIso=Path.Combine(Root,"games","Fate-Extra-Korean-"+r.BaseVersion+".iso");}
     if(installHD){Config.HdVersion=r.HdVersion;Config.HdBaseVersion=r.BaseVersion;}
+    if(changeUI){Config.UiVersion=useUI?r.UiVersion:"";Config.HdVersion=r.HdVersion;Config.HdBaseVersion=r.BaseVersion;}
+    if(installHD||changeUI||installCheats)Config.GraphicsDefaultsApplied=true;
     if(installCheats)Config.CheatsVersion=r.BaseVersion;if(installSave)Config.SaveVersion=r.BaseVersion;
     Json.Write(ConfigPath,Config);j.Committed=true;Json.Write(JournalPath,j);File.Delete(JournalPath);Say("선택한 항목 설치 완료",100);
    } catch {
