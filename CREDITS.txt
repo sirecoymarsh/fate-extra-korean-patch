@@ -1,4 +1,4 @@
-﻿Fate/EXTRA 한국어 패치 / 선택 HD 팩 — 제작·참고 자료
+Fate/EXTRA 한국어 패치 / 선택 HD 팩 — 제작·참고 자료
 
 원작: TYPE-MOON / Marvelous Entertainment / imageepoch. 비공식 팬 패치입니다.
 한국어화·통합·검수·배포 구성: Codex internal. Claude 구현·문장 교정 병합과 사용자 플레이 피드백을 포함합니다.
