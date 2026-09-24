@@ -24,8 +24,8 @@ public sealed class DiscoveryResult {
 public sealed class Discovery {
  readonly CancellationToken cancel;readonly Stopwatch watch=Stopwatch.StartNew();readonly DiscoveryResult found=new DiscoveryResult();
  readonly Dictionary<string,int> seen=new Dictionary<string,int>(StringComparer.OrdinalIgnoreCase);
- readonly string documents;readonly int maxDirs,maxSeconds;
- public Discovery(CancellationToken token,string documentsFolder=null,int directoryLimit=2500,int seconds=15) {cancel=token;documents=documentsFolder??Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);maxDirs=directoryLimit;maxSeconds=seconds;}
+ readonly string documents;readonly int maxDirs,maxSeconds;readonly bool scanIsos,scanDevices;
+ public Discovery(CancellationToken token,string documentsFolder=null,int directoryLimit=2500,int seconds=15,bool includeIsos=true,bool includeDevices=true) {cancel=token;documents=documentsFolder??Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);maxDirs=directoryLimit;maxSeconds=seconds;scanIsos=includeIsos;scanDevices=includeDevices;}
  static bool Local(string p) {try{if(String.IsNullOrWhiteSpace(p)||!Path.IsPathRooted(p)||p.StartsWith("\\\\")||p.StartsWith("//"))return false;var kind=new DriveInfo(Path.GetPathRoot(p)).DriveType;return kind==DriveType.Fixed||kind==DriveType.Removable;}catch{return false;}}
  static bool Plain(string p) {try{for(string current=Path.GetFullPath(p);!String.IsNullOrEmpty(current);current=Path.GetDirectoryName(current))if((File.GetAttributes(current)&FileAttributes.ReparsePoint)!=0)return false;return true;}catch{return false;}}
  static void Add(List<string> list,string p) {p=Path.GetFullPath(p);if(!list.Contains(p,StringComparer.OrdinalIgnoreCase))list.Add(p);}
@@ -57,9 +57,9 @@ public sealed class Discovery {
    return Local(memory)&&Directory.Exists(memory)&&Plain(memory)?Path.GetFullPath(memory):"";
   }catch{return "";}
  }
- void Emulator(string path) {if(!IsEmulator(path)||found.Emulators.Contains(Path.GetFullPath(path),StringComparer.OrdinalIgnoreCase))return;Add(found.Emulators,path);string memory=MemoryFor(path,documents);if(memory!=""){found.EmulatorMemsticks[Path.GetFullPath(path)]=memory;Memory(memory);}}
+ void Emulator(string path) {if(!scanDevices||!IsEmulator(path)||found.Emulators.Contains(Path.GetFullPath(path),StringComparer.OrdinalIgnoreCase))return;Add(found.Emulators,path);string memory=MemoryFor(path,documents);if(memory!=""){found.EmulatorMemsticks[Path.GetFullPath(path)]=memory;Memory(memory);}}
  void Memory(string p) {
-  if(!Local(p)||!Directory.Exists(p)||!Plain(p))return;string system=Path.Combine(Engine.PspRoot(p),"SYSTEM","ppsspp.ini");if(!File.Exists(system)||!Plain(system))return;Add(found.Memsticks,p);
+  if(!scanDevices||!Local(p)||!Directory.Exists(p)||!Plain(p))return;string system=Path.Combine(Engine.PspRoot(p),"SYSTEM","ppsspp.ini");if(!File.Exists(system)||!Plain(system))return;Add(found.Memsticks,p);if(!scanIsos)return;
   try {if(new FileInfo(system).Length>2*1024*1024)return;bool recent=false;int hints=0;foreach(string line in File.ReadLines(system)) {if(!Check())break;string t=line.Trim();if(t.StartsWith("[")){recent=t=="[Recent]";continue;}if(!recent||!t.StartsWith("FileName",StringComparison.Ordinal))continue;int eq=t.IndexOf('=');if(eq<0)continue;string file=t.Substring(eq+1).Trim();if(!Local(file))continue;if(IsOriginalCandidate(file))Add(found.Isos,file);if(++hints<=20)Walk(Path.GetDirectoryName(file),0);}}
   catch(IOException){}catch(UnauthorizedAccessException){}
  }
@@ -69,12 +69,12 @@ public sealed class Discovery {
   if(!Check()||!Local(root)||!Directory.Exists(root)||!Plain(root))return;string full=Path.GetFullPath(root);int previous;if(seen.TryGetValue(full,out previous)&&previous>=depth)return;seen[full]=depth;found.Directories++;
   try {
    ProbeMemory(root);
-   foreach(string p in Directory.EnumerateFiles(root)) {if(!Check())return;string name=Path.GetFileName(p);if(name.Equals("PPSSPPWindows64.exe",StringComparison.OrdinalIgnoreCase)||name.Equals("PPSSPPWindows.exe",StringComparison.OrdinalIgnoreCase))Emulator(p);else if(name.EndsWith(".iso",StringComparison.OrdinalIgnoreCase)&&IsOriginalCandidate(p))Add(found.Isos,p);}
+   foreach(string p in Directory.EnumerateFiles(root)) {if(!Check())return;string name=Path.GetFileName(p);if(scanDevices&&(name.Equals("PPSSPPWindows64.exe",StringComparison.OrdinalIgnoreCase)||name.Equals("PPSSPPWindows.exe",StringComparison.OrdinalIgnoreCase)))Emulator(p);else if(scanIsos&&name.EndsWith(".iso",StringComparison.OrdinalIgnoreCase)&&IsOriginalCandidate(p))Add(found.Isos,p);}
    if(depth>0)foreach(string p in Directory.EnumerateDirectories(root)){if(!Check())return;if(!Skip(p))Walk(p,depth-1);}
   }catch(IOException){}catch(UnauthorizedAccessException){}
  }
  public DiscoveryResult Search(IEnumerable<string> roots,int depth,Settings settings=null) {
-  if(settings!=null){if(IsOriginalCandidate(settings.SourceIso))Add(found.Isos,settings.SourceIso);Emulator(settings.Emulator);if(settings.Memstick!="")Memory(settings.Memstick);}
+  if(settings!=null){if(scanIsos&&IsOriginalCandidate(settings.SourceIso))Add(found.Isos,settings.SourceIso);Emulator(settings.Emulator);if(settings.Memstick!="")Memory(settings.Memstick);}
   foreach(string root in roots){if(!Check())break;Walk(root,depth);}
   found.Prefer64Bit();return found;
  }
@@ -83,6 +83,7 @@ public sealed class Discovery {
  // Breadth-first traversal gives every drive an equal chance to reach deep
  // portable installs. Check only emulator/config names, not every ISO or asset.
  public DiscoveryResult Devices(IEnumerable<string> roots,int maxDepth=32,Action<int> progress=null) {
+  if(!scanDevices)return found;
   var visited=new HashSet<string>(StringComparer.OrdinalIgnoreCase);var queue=new Queue<Tuple<string,int>>();foreach(string root in roots)if(Local(root))queue.Enqueue(Tuple.Create(root,0));
   while(queue.Count>0&&Check()) {
    var item=queue.Dequeue();string path=item.Item1;if(!Directory.Exists(path)||!Plain(path))continue;string full=Path.GetFullPath(path);if(!visited.Add(full))continue;found.Directories++;
@@ -109,13 +110,13 @@ public sealed class Discovery {
  public DiscoveryResult Common(string launcherRoot,Settings settings,IEnumerable<string> history=null) {
   // Use existing per-user execution hints before bounded tree traversal. Paths
   // are validated as local PE/assets candidates; registry values are not read.
-  foreach(string entry in history??WindowsEmulatorHistory()){if(!Check())break;string path=HistoryExecutable(entry);if(path!="")Emulator(path);}
+  if(scanDevices)foreach(string entry in history??WindowsEmulatorHistory()){if(!Check())break;string path=HistoryExecutable(entry);if(path!="")Emulator(path);}
   var roots=new List<string>{launcherRoot};string profile=Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
   foreach(string p in new[]{"Downloads","Desktop","Games","Emulators"})roots.Add(Path.Combine(profile,p));
-  roots.Add(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory));roots.Add(Path.Combine(documents,"PPSSPP"));
-  foreach(string special in new[]{Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)})if(special!="")roots.Add(Path.Combine(special,"PPSSPP"));
+  roots.Add(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory));if(scanDevices)roots.Add(Path.Combine(documents,"PPSSPP"));
+  if(scanDevices)foreach(string special in new[]{Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)})if(special!="")roots.Add(Path.Combine(special,"PPSSPP"));
   foreach(var drive in DriveInfo.GetDrives())try{if((drive.DriveType==DriveType.Fixed||drive.DriveType==DriveType.Removable)&&drive.IsReady)foreach(string name in new[]{"DOWN","Downloads","Games","Emulators","PSP","PPSSPP","ROMs"})roots.Add(Path.Combine(drive.RootDirectory.FullName,name));}catch(IOException){}
-  foreach(string name in new[]{"PPSSPPWindows64","PPSSPPWindows"})foreach(var process in Process.GetProcessesByName(name))using(process)try{Emulator(process.MainModule.FileName);}catch{}
+  if(scanDevices)foreach(string name in new[]{"PPSSPPWindows64","PPSSPPWindows"})foreach(var process in Process.GetProcessesByName(name))using(process)try{Emulator(process.MainModule.FileName);}catch{}
   Memory(Path.Combine(documents,"PPSSPP"));return Search(roots.Distinct(StringComparer.OrdinalIgnoreCase),3,settings);
  }
 }

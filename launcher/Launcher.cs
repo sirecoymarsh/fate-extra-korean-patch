@@ -12,7 +12,7 @@ namespace FateLauncher {
 public sealed class LauncherForm : Form {
  readonly string settingsPath,tools,launcherRoot;
  Settings config; ReleaseInfo release; Engine engine; CancellationTokenSource cancel;
- bool busy,preview; Control source,emulator,memstick,dataRoot;TextBox log;DiscoveryResult discoveries;string automaticMemory="";
+ bool busy,preview,shown,launchSetup,previousExtras,previousBase; Control source,emulator,memstick,dataRoot;TextBox log;DiscoveryResult discoveries;string automaticMemory="";
  Label current,available,message,selectionSummary;
  CheckBox baseBox,hdBox,cheatsBox,saveBox;
  Button check,install,play,stop,autoFind,folderFind; ProgressBar bar; TableLayoutPanel paths,components;
@@ -55,7 +55,23 @@ public sealed class LauncherForm : Form {
   log=new TextBox{Dock=DockStyle.Fill,Multiline=true,ReadOnly=true,ScrollBars=ScrollBars.Vertical,BackColor=panel,ForeColor=muted,BorderStyle=BorderStyle.None,Font=new Font("맑은 고딕",9)};outer.Controls.Add(log,0,8);
   var footer=new Label{Dock=DockStyle.Fill,Text="원본 ISO·에뮬레이터는 별도로 준비하세요. PSP 실기 호환은 미검증입니다.",ForeColor=muted,TextAlign=ContentAlignment.BottomLeft,Font=new Font("맑은 고딕",9)};outer.Controls.Add(footer,0,9);
   RefreshInstalled();FormClosing+=(s,e)=>{if(busy){e.Cancel=true;if(cancel!=null)cancel.Cancel();SetMessage("작업을 취소하고 정리하는 중입니다. 완료 후 창을 닫아 주세요.");}else if(!preview){try{CaptureSettings();Json.Write(settingsPath,config);}catch{}}};
-  if(!preview)Shown+=async(s,e)=>{await FindPaths(true,false);CheckLatest();};else{available.Text="새 버전  v8e + HD v39\n업데이트 버튼으로 적용";current.Text="설치됨  본편 v8d · HD v38\n치트 미설치 · 클리어 세이브 미설치";log.Text="시작 시 원본 ISO와 PPSSPP 위치를 찾아 빈 경로를 채웁니다.\r\n여러 후보가 있으면 경로 자동 찾기를 눌러 고를 수 있습니다.";}
+  previousExtras=cheatsBox.Checked||saveBox.Checked;previousBase=baseBox.Checked;
+  foreach(var option in new[]{baseBox,hdBox,cheatsBox,saveBox})option.CheckedChanged+=SelectionChanged;
+  RefreshPathRequirements();
+  if(!preview)Shown+=async(s,e)=>{shown=true;await FindPaths(true,false);CheckLatest();};else{available.Text="새 버전  v8e + HD v39\n업데이트 버튼으로 적용";current.Text="설치됨  본편 v8d · HD v38\n치트 미설치 · 클리어 세이브 미설치";log.Text="선택한 설치 항목에 필요한 경로만 확인합니다.\r\n치트·클리어 세이브를 선택하면 PPSSPP·메모리스틱 자동 탐색을 시작합니다.";}
+ }
+ void RefreshPathRequirements() {
+  bool extras=cheatsBox.Checked||saveBox.Checked;bool memory=extras||hdBox.Checked||launchSetup;
+  bool[] enabled={baseBox.Checked,extras||launchSetup,memory,true};
+  for(int row=0;row<4;row++)for(int col=0;col<3;col++)paths.GetControlFromPosition(col,row).Enabled=enabled[row];
+  autoFind.Enabled=folderFind.Enabled=!busy&&(baseBox.Checked||extras||launchSetup);
+  selectionSummary.Text=extras?"치트·세이브 설치에는 메모리스틱이 필요합니다. PPSSPP는 위치를 찾을 때 사용합니다.":hdBox.Checked?"HD를 설치할 메모리스틱 폴더를 지정하세요. PPSSPP 실행 파일은 필요하지 않습니다.":baseBox.Checked?"본편 설치에는 원본 ISO만 필요합니다. PPSSPP·메모리스틱은 찾지 않습니다.":"설치할 항목을 선택하세요.";
+ }
+ async void SelectionChanged(object sender,EventArgs e) {
+  bool extras=cheatsBox.Checked||saveBox.Checked;
+  bool discover=(extras&&!previousExtras&&memstick.Text.Trim()=="")||(baseBox.Checked&&!previousBase&&source.Text.Trim()=="");
+  previousExtras=extras;previousBase=baseBox.Checked;RefreshPathRequirements();
+  if(shown&&!preview&&!busy&&discover)await FindPaths(true,false);
  }
  Label Label(string text,Color color) {return new Label{Dock=DockStyle.Fill,Text=text,ForeColor=color,TextAlign=ContentAlignment.MiddleLeft,AutoEllipsis=true};}
  Button Button(string text,Action click) {var b=new Button{Text=text,FlatStyle=FlatStyle.Flat,BackColor=panel,ForeColor=ink,Cursor=Cursors.Hand};b.FlatAppearance.BorderColor=Color.FromArgb(42,83,109);b.Click+=(s,e)=>click();return b;}
@@ -73,9 +89,9 @@ public sealed class LauncherForm : Form {
   if(discoveries==null||config.BaseVersion!=""||config.HdVersion!=""||config.CheatsVersion!=""||config.SaveVersion!="")return;
   string paired;if((memstick.Text==""||memstick.Text==automaticMemory)&&discoveries.EmulatorMemsticks.TryGetValue(emulator.Text,out paired)){memstick.Text=paired;automaticMemory=paired;SetMessage("선택한 PPSSPP의 메모리스틱을 연결했습니다.");}
  }
- void ShowCandidates(DiscoveryResult result) {
-  discoveries=result;var boxes=new[]{(ComboBox)source,(ComboBox)emulator,(ComboBox)memstick};var lists=new[]{result.Isos,result.Emulators,result.Memsticks};
-  for(int i=0;i<boxes.Length;i++){string currentText=boxes[i].Text;boxes[i].BeginUpdate();boxes[i].Items.Clear();boxes[i].Items.AddRange(lists[i].Cast<object>().ToArray());boxes[i].Text=currentText;boxes[i].EndUpdate();}
+ void ShowCandidates(DiscoveryResult result,bool isos,bool devices) {
+  if(devices)discoveries=result;var boxes=new[]{(ComboBox)source,(ComboBox)emulator,(ComboBox)memstick};var lists=new[]{result.Isos,result.Emulators,result.Memsticks};
+  for(int i=0;i<boxes.Length;i++){if(i==0?!isos:!devices)continue;string currentText=boxes[i].Text;boxes[i].BeginUpdate();boxes[i].Items.Clear();boxes[i].Items.AddRange(lists[i].Cast<object>().ToArray());boxes[i].Text=currentText;boxes[i].EndUpdate();}
  }
  static string Pick(IWin32Window owner,string title,System.Collections.Generic.List<string> choices) {
   if(choices.Count==0)return "";if(choices.Count==1)return choices[0];using(var dialog=new Form{Text=title,Width=840,Height=280,StartPosition=FormStartPosition.CenterParent,MinimizeBox=false,MaximizeBox=false}) {
@@ -88,18 +104,20 @@ public sealed class LauncherForm : Form {
   if(target.SourceIso==""&&result.Isos.Count==1)target.SourceIso=result.Isos[0];if(target.Emulator==""&&result.Emulators.Count==1)target.Emulator=result.Emulators[0];
   if(target.Memstick==""){string memory;if(result.EmulatorMemsticks.TryGetValue(target.Emulator,out memory))target.Memstick=memory;else if(result.Emulators.Count<=1&&result.Memsticks.Count==1)target.Memstick=result.Memsticks[0];}
  }
- async Task FindPaths(bool startup,bool chooseFolder) {
+ async Task FindPaths(bool startup,bool chooseFolder,bool forLaunch=false) {
+  bool findIsos=baseBox.Checked&&!forLaunch,findDevices=cheatsBox.Checked||saveBox.Checked||forLaunch||launchSetup;
+  if(startup){findIsos&=source.Text.Trim()=="";findDevices&=memstick.Text.Trim()=="";}
+  if(!findIsos&&!findDevices)return;
   if(busy)return;string folder="";if(chooseFolder)using(var dialog=new FolderBrowserDialog{Description="원본 ISO 또는 PPSSPP가 있는 상위 폴더를 선택하세요."}){if(dialog.ShowDialog(this)!=DialogResult.OK)return;folder=dialog.SelectedPath;}
-  if(startup&&source.Text!=""&&emulator.Text!=""&&memstick.Text!="")return;
   cancel=new CancellationTokenSource();Busy(true);try {
-   var snapshot=new Settings{SourceIso=source.Text.Trim(),Emulator=emulator.Text.Trim(),Memstick=memstick.Text.Trim()};SetMessage("원본 ISO·PPSSPP·메모리스틱 위치를 찾는 중…");
-   var result=await Task.Run(()=>{var search=new Discovery(cancel.Token,null,chooseFolder?20000:2500,chooseFolder?45:15);var hits=chooseFolder?search.Search(new[]{folder},16,snapshot):search.Common(launcherRoot,snapshot);
-    if(!chooseFolder&&(hits.Emulators.Count==0||hits.Memsticks.Count==0)){BeginInvoke((Action)(()=>SetMessage("PPSSPP·메모리스틱을 드라이브 안쪽에서 찾는 중… 최대 45초")));var deep=new Discovery(cancel.Token,null,50000,45);hits.Merge(deep.Devices(Discovery.DeviceRoots(launcherRoot)));hits.Prefer64Bit();}return hits;});
-   ShowCandidates(result);bool memoryWasEmpty=snapshot.Memstick=="";
+   var snapshot=new Settings{SourceIso=source.Text.Trim(),Emulator=emulator.Text.Trim(),Memstick=memstick.Text.Trim()};SetMessage(findDevices?(findIsos?"원본 ISO·PPSSPP·메모리스틱 위치를 찾는 중…":"PPSSPP·메모리스틱 위치를 찾는 중…"):"일본판 원본 ISO 위치를 찾는 중…");
+   var result=await Task.Run(()=>{var search=new Discovery(cancel.Token,null,chooseFolder?20000:2500,chooseFolder?45:15,findIsos,findDevices);var hits=chooseFolder?search.Search(new[]{folder},16,snapshot):search.Common(launcherRoot,snapshot);
+    if(findDevices&&!chooseFolder&&hits.Memsticks.Count==0){BeginInvoke((Action)(()=>SetMessage("PPSSPP·메모리스틱을 드라이브 안쪽에서 찾는 중… 최대 45초")));var deep=new Discovery(cancel.Token,null,50000,45,findIsos,true);hits.Merge(deep.Devices(Discovery.DeviceRoots(launcherRoot)));hits.Prefer64Bit();}return hits;});
+   ShowCandidates(result,findIsos,findDevices);bool memoryWasEmpty=snapshot.Memstick=="";
    FillPaths(result,snapshot);bool memoryInferred=memoryWasEmpty&&snapshot.Memstick!="";
-   if(!startup){if(snapshot.SourceIso=="")snapshot.SourceIso=Pick(this,"원본 ISO 선택",result.Isos);if(snapshot.Emulator=="")snapshot.Emulator=Pick(this,"PPSSPP 선택",result.Emulators);FillPaths(result,snapshot);memoryInferred=memoryWasEmpty&&snapshot.Memstick!="";if(snapshot.Memstick=="")snapshot.Memstick=Pick(this,"메모리스틱 선택",result.Memsticks);}
+   if(!startup){if(findIsos&&snapshot.SourceIso=="")snapshot.SourceIso=Pick(this,"원본 ISO 선택",result.Isos);if(findDevices&&snapshot.Emulator=="")snapshot.Emulator=Pick(this,"PPSSPP 선택",result.Emulators);FillPaths(result,snapshot);memoryInferred=memoryWasEmpty&&snapshot.Memstick!="";if(findDevices&&snapshot.Memstick=="")snapshot.Memstick=Pick(this,"메모리스틱 선택",result.Memsticks);}
    source.Text=snapshot.SourceIso;emulator.Text=snapshot.Emulator;memstick.Text=snapshot.Memstick;if(memoryWasEmpty)automaticMemory=memoryInferred?snapshot.Memstick:"";
-   SetMessage("탐색 완료 · 원본 "+result.Isos.Count+"개, PPSSPP "+result.Emulators.Count+"개, 메모리스틱 "+result.Memsticks.Count+"개. 입력 칸의 ▼에서 선택하세요."+(result.Limited?" 일부 경로는 탐색 한도에 도달했습니다.":""));
+   SetMessage("탐색 완료 · "+(findIsos?"원본 "+result.Isos.Count+"개":"")+(findIsos&&findDevices?", ":"")+(findDevices?"PPSSPP "+result.Emulators.Count+"개, 메모리스틱 "+result.Memsticks.Count+"개":"")+". 입력 칸의 ▼에서 선택하세요."+(result.Limited?" 일부 경로는 탐색 한도에 도달했습니다.":""));
   }catch(OperationCanceledException){SetMessage("경로 탐색을 취소했습니다.");}catch(Exception e){SetMessage("경로 탐색: "+e.Message);}finally{Busy(false);cancel.Dispose();cancel=null;}
  }
  CheckBox Option(int column,string caption,string description,bool selected) {
@@ -117,7 +135,7 @@ public sealed class LauncherForm : Form {
  string V(string s){return s==""?"미설치":s;}
  void RefreshInstalled(){current.Text="본편 "+V(config.BaseVersion)+"  ·  HD "+V(config.HdVersion)+"\n치트 "+V(config.CheatsVersion)+"  ·  클리어 세이브 "+V(config.SaveVersion);if(play!=null)play.Enabled=!busy&&File.Exists(config.GameIso);}
  void SetMessage(string s){if(message.Text!=s){message.Text=s;log.AppendText(DateTime.Now.ToString("HH:mm")+"  "+s+Environment.NewLine);}}
- void Busy(bool value){busy=value;check.Enabled=!value;install.Enabled=!value&&release!=null;play.Enabled=!value&&File.Exists(config.GameIso);stop.Enabled=value;paths.Enabled=!value;components.Enabled=!value;autoFind.Enabled=!value;folderFind.Enabled=!value;if(!value){bar.Style=ProgressBarStyle.Continuous;RefreshInstalled();}}
+ void Busy(bool value){busy=value;check.Enabled=!value;install.Enabled=!value&&release!=null;play.Enabled=!value&&File.Exists(config.GameIso);stop.Enabled=value;paths.Enabled=!value;components.Enabled=!value;RefreshPathRequirements();if(!value){bar.Style=ProgressBarStyle.Continuous;RefreshInstalled();}}
  async void CheckLatest() {
   if(busy)return;cancel=new CancellationTokenSource();Busy(true);
   try{engine=EngineForWork();SetMessage("GitHub 새 버전 확인 중…");release=await Task.Run(()=>engine.Latest());available.Text="배포 중  "+release.BaseVersion+" + "+release.HdVersion+"\n"+((config.BaseVersion==release.BaseVersion&&(!config.SelectHD||config.HdVersion==release.HdVersion))?"선택한 설치 버전이 최신입니다.":"선택 항목 설치 / 업데이트 버튼으로 적용");SetMessage("확인 완료. 설치할 항목을 고른 뒤 업데이트 버튼을 눌러 주세요.");}
@@ -130,8 +148,8 @@ public sealed class LauncherForm : Form {
   catch(Exception e){if(engine!=null)config=engine.Config;SetMessage(e is OperationCanceledException?"취소했습니다. 받은 데이터는 다음에 이어받습니다.":e.Message);}
   finally{Busy(false);cancel.Dispose();cancel=null;}
  }
- void Launch() {
-  try{CaptureSettings();if(busy||Engine.GameRunning())throw new Exception("이미 PPSSPP가 실행 중입니다.");if(!File.Exists(config.Emulator))throw new Exception("PPSSPP 실행 파일을 지정해 주세요.");if(!File.Exists(config.GameIso))throw new Exception("본편 패치를 먼저 설치해 주세요.");
+ async void Launch() {
+  try{if(busy)return;launchSetup=true;RefreshPathRequirements();if(emulator.Text.Trim()==""||memstick.Text.Trim()=="")await FindPaths(false,false,true);CaptureSettings();if(busy||Engine.GameRunning())throw new Exception("이미 PPSSPP가 실행 중입니다.");if(!File.Exists(config.Emulator))throw new Exception("PPSSPP 실행 파일을 지정해 주세요.");if(!File.Exists(config.GameIso))throw new Exception("본편 패치를 먼저 설치해 주세요.");
    if(config.Memstick=="")throw new Exception("세이브와 HD를 사용할 메모리스틱 폴더를 지정해 주세요.");Directory.CreateDirectory(config.Memstick);Json.Write(settingsPath,config);
    var launcherEngine=new Engine(config,settingsPath,tools);Process.Start(launcherEngine.GameStartInfo());SetMessage("PPSSPP를 실행했습니다. 예전 상태 저장 대신 게임 내 불러오기를 사용하세요.");
   }catch(Exception e){SetMessage(e.Message);}

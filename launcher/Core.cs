@@ -67,7 +67,7 @@ public sealed class Journal {
  public string PreviousSettings; public bool Committed; public List<Swap> Operations=new List<Swap>();
 }
 public sealed class Engine {
- public const string Version="1.2.1",Repository="sirecoymarsh/fate-extra-korean-patch";
+ public const string Version="1.3.0",Repository="sirecoymarsh/fate-extra-korean-patch";
  public const string ReleaseRoot="https://github.com/"+Repository+"/releases/download/";
  public const string SourceHash="60399D610CBCDA96601374A2E621A22BB58505C403C6FA4221EEC5E87235667B";
  public const long SourceSize=1280933888;
