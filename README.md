@@ -10,11 +10,11 @@ PSP 일본판 **Fate/EXTRA (NPJH50247)**용 비공식 한국어 패치입니다.
 
 ## Windows 선택 설치 런처
 
-**[런처 1.2.0 다운로드](https://github.com/sirecoymarsh/fate-extra-korean-patch/releases/download/v8e-hd-v39/Fate-Extra-Korean-Launcher-v1.2.0.zip)**
+**[런처 1.2.1 다운로드](https://github.com/sirecoymarsh/fate-extra-korean-patch/releases/download/v8e-hd-v39/Fate-Extra-Korean-Launcher-v1.2.1.zip)**
 
 ZIP을 전부 풀고 `FateExtraLauncher.exe`를 실행하세요. 본편 한국어 패치·HD 리팩·치트·클리어 세이브를 각각 선택할 수 있습니다. 새 버전은 시작할 때 알림만 표시하며, **설치 / 업데이트 버튼을 눌러야 적용**합니다. 기존 설치 자료는 자동 백업합니다.
 
-시작 시 일본판 원본 ISO·PPSSPP·메모리스틱 위치를 자동으로 찾습니다. 일반 위치에서 PPSSPP나 메모리스틱을 찾지 못하면 로컬 드라이브를 추가 탐색합니다. 여러 후보는 입력 칸의 **▼**에서 고르세요. PPSSPP 선택 시 해당 메모리스틱을 연결하며, 직접 지정한 폴더는 유지합니다. 다른 위치는 **폴더 안에서 찾기…**로 좁혀 탐색할 수 있습니다. HD·치트·세이브는 기본 선택이 꺼져 있습니다. 원본과 PPSSPP는 별도 준비가 필요합니다. [런처 사용법](launcher/README-ko.md) · [런처 소스](launcher/)
+시작 시 일본판 원본 ISO·PPSSPP·메모리스틱 위치를 자동으로 찾습니다. 1.2.1은 Windows에 남아 있는 PPSSPP 실행 경로를 먼저 확인해, 다른 드라이브의 깊은 설치 폴더도 찾습니다. 일반 위치에서 PPSSPP나 메모리스틱을 찾지 못하면 로컬 드라이브를 추가 탐색합니다. 여러 후보는 입력 칸의 **▼**에서 고르세요. PPSSPP 선택 시 해당 메모리스틱을 연결하며, 직접 지정한 폴더는 유지합니다. 다른 위치는 **폴더 안에서 찾기…**로 좁혀 탐색할 수 있습니다. HD·치트·세이브는 기본 선택이 꺼져 있습니다. 원본과 PPSSPP는 별도 준비가 필요합니다. [런처 사용법](launcher/README-ko.md) · [런처 소스](launcher/)
 
 현재 런처는 **미서명 배포본**입니다. “Windows의 PC 보호 / 알 수 없는 게시자” 경고에 대해서는 [서명 안내](launcher/README-ko.md)를 확인하세요.
 
@@ -22,7 +22,7 @@ ZIP을 전부 풀고 `FateExtraLauncher.exe`를 실행하세요. 본편 한국�
 
 | 파일 | 용도 |
 | --- | --- |
-| `Fate-Extra-Korean-Launcher-v1.2.0.zip` | Windows 선택 설치·업데이트 런처 |
+| `Fate-Extra-Korean-Launcher-v1.2.1.zip` | Windows 선택 설치·업데이트 런처 |
 | `Fate-Extra-Korean-Base-v8e.zip` | 기본 한국어 패치. PSP/PPSSPP 치트 19종과 캐스터 클리어 세이브를 선택 자료로 포함 |
 | `Fate-Extra-Korean-HD-v39.z01` | 선택 HD 전체 팩의 첫 번째 조각 |
 | `Fate-Extra-Korean-HD-v39.zip` | 선택 HD 전체 팩의 마지막 조각 / 압축을 열 파일 |

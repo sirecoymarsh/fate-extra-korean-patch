@@ -5,6 +5,8 @@ using System.Text;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using System.Text.RegularExpressions;
+using Microsoft.Win32;
 
 namespace FateLauncher {
 public sealed class DiscoveryResult {
@@ -92,7 +94,22 @@ public sealed class Discovery {
   }
   found.Prefer64Bit();return found;
  }
- public DiscoveryResult Common(string launcherRoot,Settings settings) {
+ public static string HistoryExecutable(string name) {
+  if(String.IsNullOrEmpty(name))return "";
+  var match=Regex.Match(name,@"^(.*[\\/]PPSSPPWindows(?:64)?\.exe)(?:\.(?:FriendlyAppName|ApplicationCompany))?$",RegexOptions.IgnoreCase|RegexOptions.CultureInvariant);
+  return match.Success&&Local(match.Groups[1].Value)?match.Groups[1].Value:"";
+ }
+ static string[] WindowsEmulatorHistory() {
+  var candidates=new List<string>();
+  foreach(string location in new[]{@"Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Compatibility Assistant\Store",@"Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\MuiCache"})
+   try {using(var key=Registry.CurrentUser.OpenSubKey(location,false))if(key!=null)foreach(string name in key.GetValueNames()){string path=HistoryExecutable(name);if(path!=""&&!candidates.Contains(path,StringComparer.OrdinalIgnoreCase))candidates.Add(path);}}
+   catch(System.Security.SecurityException){}catch(UnauthorizedAccessException){}catch(IOException){}
+  return candidates.ToArray();
+ }
+ public DiscoveryResult Common(string launcherRoot,Settings settings,IEnumerable<string> history=null) {
+  // Use existing per-user execution hints before bounded tree traversal. Paths
+  // are validated as local PE/assets candidates; registry values are not read.
+  foreach(string entry in history??WindowsEmulatorHistory()){if(!Check())break;string path=HistoryExecutable(entry);if(path!="")Emulator(path);}
   var roots=new List<string>{launcherRoot};string profile=Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
   foreach(string p in new[]{"Downloads","Desktop","Games","Emulators"})roots.Add(Path.Combine(profile,p));
   roots.Add(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory));roots.Add(Path.Combine(documents,"PPSSPP"));
