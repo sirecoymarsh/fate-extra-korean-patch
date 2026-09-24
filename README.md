@@ -10,17 +10,19 @@ PSP 일본판 **Fate/EXTRA (NPJH50247)**용 비공식 한국어 패치입니다.
 
 ## Windows 선택 설치 런처
 
-**[런처 1.0.0 다운로드](https://github.com/sirecoymarsh/fate-extra-korean-patch/releases/download/v8e-hd-v39/Fate-Extra-Korean-Launcher-v1.0.0.zip)**
+**[런처 1.1.0 다운로드](https://github.com/sirecoymarsh/fate-extra-korean-patch/releases/download/v8e-hd-v39/Fate-Extra-Korean-Launcher-v1.1.0.zip)**
 
 ZIP을 전부 풀고 `FateExtraLauncher.exe`를 실행하세요. 본편 한국어 패치·HD 리팩·치트·클리어 세이브를 각각 선택할 수 있습니다. 새 버전은 시작할 때 알림만 표시하며, **설치 / 업데이트 버튼을 눌러야 적용**합니다. 기존 설치 자료는 자동 백업합니다.
 
-일본판 원본 ISO, PPSSPP와 메모리스틱 폴더를 지정하세요. HD·치트·세이브는 기본 선택이 꺼져 있습니다. 원본과 PPSSPP는 별도 준비가 필요합니다. [런처 사용법](launcher/README-ko.md) · [런처 소스](launcher/)
+시작 시 일본판 원본 ISO·PPSSPP·메모리스틱 위치를 자동으로 찾습니다. 여러 후보는 **경로 자동 찾기**로 선택하고, 다른 위치는 **폴더 안에서 찾기…**로 탐색하세요. 이미 지정한 경로는 유지합니다. HD·치트·세이브는 기본 선택이 꺼져 있습니다. 원본과 PPSSPP는 별도 준비가 필요합니다. [런처 사용법](launcher/README-ko.md) · [런처 소스](launcher/)
+
+현재 런처는 **미서명 배포본**입니다. “Windows의 PC 보호 / 알 수 없는 게시자” 경고에 대해서는 [서명 안내](launcher/README-ko.md)를 확인하세요.
 
 ## 받을 파일
 
 | 파일 | 용도 |
 | --- | --- |
-| `Fate-Extra-Korean-Launcher-v1.0.0.zip` | Windows 선택 설치·업데이트 런처 |
+| `Fate-Extra-Korean-Launcher-v1.1.0.zip` | Windows 선택 설치·업데이트 런처 |
 | `Fate-Extra-Korean-Base-v8e.zip` | 기본 한국어 패치. PSP/PPSSPP 치트 19종과 캐스터 클리어 세이브를 선택 자료로 포함 |
 | `Fate-Extra-Korean-HD-v39.z01` | 선택 HD 전체 팩의 첫 번째 조각 |
 | `Fate-Extra-Korean-HD-v39.zip` | 선택 HD 전체 팩의 마지막 조각 / 압축을 열 파일 |
