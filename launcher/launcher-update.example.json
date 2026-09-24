@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "repository": "sirecoymarsh/fate-extra-korean-patch",
+  "release_tag": "v8e-hd-v39",
+  "minimum_launcher": "1.0.0",
+  "base_version": "v8e",
+  "hd_version": "HD-v39",
+  "base_root": "Fate-Extra-Korean-Base-v8e",
+  "hd_root": "Fate-Extra-Korean-HD-v39",
+  "patch_name": "Fate-Extra-Korean-v8e.xdelta",
+  "source": {
+    "bytes": 1280933888,
+    "sha256": "60399D610CBCDA96601374A2E621A22BB58505C403C6FA4221EEC5E87235667B"
+  },
+  "target": {
+    "bytes": 1979887616,
+    "sha256": "44F2993C806C301776EEFBF68D2774CBB9E97D07FA3ECB13CCF2428CA084D64C"
+  },
+  "base_asset": {
+    "name": "Fate-Extra-Korean-Base-v8e.zip",
+    "bytes": 165024197,
+    "sha256": "68CD4312EBA459BFCB4BB69F0203E0D382B9D8547158A0BB4A2C696771B3868F"
+  },
+  "hd_assets": [
+    {
+      "name": "Fate-Extra-Korean-HD-v39.z01",
+      "bytes": 1900000000,
+      "sha256": "C1096B77B5690A06A793596B4E48D7621847236BFDDA18589F1F9F1B66D38448"
+    },
+    {
+      "name": "Fate-Extra-Korean-HD-v39.zip",
+      "bytes": 209385083,
+      "sha256": "E8EF681C956BE82DFA77BBAAA572430D671477D8DF99C595A9CE525BB8BB50C3"
+    }
+  ],
+  "notes": "원래 영어였던 UI 복원. 한국어 대사·설명과 HD 그림 보정 유지.",
+  "hardware_psp_verified": false,
+  "hd_textures_ini_sha256": "E8BEF409AC93093ACCC7165079CCB4FE1988A753EC7EC6C8873317FE2BA2D6F2"
+}

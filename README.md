@@ -8,10 +8,19 @@ PSP 일본판 **Fate/EXTRA (NPJH50247)**용 비공식 한국어 패치입니다.
 
 기본 v8e와 HD v39에서 **원래 영어였던 UI를 영어로 복원**했습니다. HD의 해상도는 유지했습니다. 원래 일본어였던 UI의 한국어, 대사·설명·자막, 글꼴, 기존 인물·배경 보정은 유지합니다. 새 매핑 때문에 기본 v8e와 HD v39를 함께 사용하세요.
 
+## Windows 선택 설치 런처
+
+**[런처 1.0.0 다운로드](https://github.com/sirecoymarsh/fate-extra-korean-patch/releases/download/v8e-hd-v39/Fate-Extra-Korean-Launcher-v1.0.0.zip)**
+
+ZIP을 전부 풀고 `FateExtraLauncher.exe`를 실행하세요. 본편 한국어 패치·HD 리팩·치트·클리어 세이브를 각각 선택할 수 있습니다. 새 버전은 시작할 때 알림만 표시하며, **설치 / 업데이트 버튼을 눌러야 적용**합니다. 기존 설치 자료는 자동 백업합니다.
+
+일본판 원본 ISO, PPSSPP와 메모리스틱 폴더를 지정하세요. HD·치트·세이브는 기본 선택이 꺼져 있습니다. 원본과 PPSSPP는 별도 준비가 필요합니다. [런처 사용법](launcher/README-ko.md) · [런처 소스](launcher/)
+
 ## 받을 파일
 
 | 파일 | 용도 |
 | --- | --- |
+| `Fate-Extra-Korean-Launcher-v1.0.0.zip` | Windows 선택 설치·업데이트 런처 |
 | `Fate-Extra-Korean-Base-v8e.zip` | 기본 한국어 패치. PSP/PPSSPP 치트 19종과 캐스터 클리어 세이브를 선택 자료로 포함 |
 | `Fate-Extra-Korean-HD-v39.z01` | 선택 HD 전체 팩의 첫 번째 조각 |
 | `Fate-Extra-Korean-HD-v39.zip` | 선택 HD 전체 팩의 마지막 조각 / 압축을 열 파일 |
@@ -44,7 +53,7 @@ HD는 **`.z01`과 `.zip`을 둘 다 내려받아 같은 폴더에 놓은 뒤 `.z
 
 ## 치트와 클리어 세이브
 
-기본 팩의 `Extras/사용법.txt`를 읽고 필요한 항목만 설치하세요. 자동 설치하지 않습니다.
+런처에서는 필요한 항목을 선택하고 설치 버튼을 누릅니다. 수동 설치 시에는 기본 팩의 `Extras/사용법.txt`를 참고하세요. 치트·클리어 세이브를 선택하지 않으면 설치하지 않습니다.
 
 - PPSSPP 한국어 치트 목록과 PSP CWCheat 영문 코드 목록을 동봉했습니다. 19개 모두 기본적으로 꺼져 있습니다.
 - 클리어 세이브는 `NPJH50247DATA80`의 캐스터 Lv.52 / 총 37시간51분 데이터입니다. 기존 같은 슬롯을 반드시 백업하세요.

@@ -1,0 +1,17 @@
+Fate/EXTRA Korean patch launcher
+
+7-Zip Extra 26.03, x64 7za.exe
+Copyright (c) Igor Pavlov and contributors.
+LGPL and BSD components; see tools/LICENSE-7-Zip.txt and README-7-Zip.txt.
+Official binary and corresponding source:
+https://github.com/ip7z/7zip/releases/tag/26.03
+https://www.7-zip.org/
+
+xdelta3 3.2.0
+Copyright (c) Joshua MacDonald and contributors.
+Apache License 2.0; see tools/LICENSE-xdelta3.txt and README-xdelta3.md.
+Source and releases:
+https://github.com/jmacd/xdelta
+
+The launcher invokes these independent command-line tools without modifying them.
+PPSSPP, game disc images, save states and user settings are not included.
