@@ -2,7 +2,7 @@
   "schema": 1,
   "repository": "sirecoymarsh/fate-extra-korean-patch",
   "release_tag": "v8f-hd-v52-ui-v2",
-  "minimum_launcher": "1.4.1",
+  "minimum_launcher": "1.4.2",
   "base_version": "v8f",
   "hd_version": "HD-v52",
   "base_root": "Fate-Extra-Korean-Base-v8f",
@@ -33,7 +33,7 @@
       "sha256": "EE62CD9C3E136506FB593D916B28F66E37FE2F286F240B74B1CBEEBA766AE517"
     }
   ],
-  "notes": "본편 v8f 매트릭스 로딩 수정 + HD v52 누적 그림 복원 + 선택 UI v2. 런처1.4.1 필요. 실험 v51a의 다른 본편 변경은 미포함.",
+  "notes": "본편 v8f 매트릭스 로딩 수정 + HD v52 누적 그림 복원 + 선택 UI v2. 런처1.4.2 필요. 실험 v51a의 다른 본편 변경은 미포함. 16MB 이상 파일 4구간 병렬 다운로드.",
   "hardware_psp_verified": false,
   "hd_textures_ini_sha256": "8619B92BC1294483AAE4A7AD120E1447CB651536785EC760FE698CD984FEC29F",
   "ui_version": "UI-v2",

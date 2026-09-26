@@ -75,7 +75,7 @@ public sealed class Journal {
  public string PreviousSettings; public bool Committed; public List<Swap> Operations=new List<Swap>();
 }
 public sealed class Engine {
- public const string Version="1.4.1",Repository="sirecoymarsh/fate-extra-korean-patch";
+ public const string Version="1.4.2",Repository="sirecoymarsh/fate-extra-korean-patch";
  public const string ReleaseRoot="https://github.com/"+Repository+"/releases/download/";
  public const string SourceHash="60399D610CBCDA96601374A2E621A22BB58505C403C6FA4221EEC5E87235667B";
  public const long SourceSize=1280933888;
@@ -132,7 +132,8 @@ public sealed class Engine {
   string dir=Path.Combine(Root,"downloads",tag);NoLinkParents(dir);Directory.CreateDirectory(dir);string dest=Path.Combine(dir,a.Name),part=dest+".partial";NoLinks(dest);NoLinks(part);
   if(File.Exists(dest)){Say("받은 파일 확인: "+a.Name);try{Verify(dest,a.Size,a.Hash);return dest;}catch{File.Move(dest,dest+".damaged-"+Guid.NewGuid().ToString("N"));Say("손상된 다운로드를 다시 받습니다: "+a.Name);}}
   long offset=File.Exists(part)?new FileInfo(part).Length:0;if(offset>a.Size){File.Delete(part);offset=0;}
-  if(offset<a.Size)using(var c=Client())using(var req=new HttpRequestMessage(HttpMethod.Get,a.Url)) {
+  bool parallel=offset==0&&!File.Exists(part)&&a.Size>=ParallelDownload.MinimumSize&&ParallelDownload.Receive(a,part,Cancel,(s,p)=>Say(s,p));
+  if(!parallel&&offset<a.Size)using(var c=Client())using(var req=new HttpRequestMessage(HttpMethod.Get,a.Url)) {
    if(offset>0)req.Headers.Range=new RangeHeaderValue(offset,null);
    using(var res=c.SendAsync(req,HttpCompletionOption.ResponseHeadersRead,Cancel).GetAwaiter().GetResult()) {
     res.EnsureSuccessStatusCode();
@@ -144,7 +145,7 @@ public sealed class Engine {
     }
    }
   }
-  Say("다운로드 확인: "+a.Name);try{Verify(part,a.Size,a.Hash);}catch{if(File.Exists(part))File.Delete(part);throw;}File.Move(part,dest);return dest;
+  Say("다운로드 확인: "+a.Name);try{Verify(part,a.Size,a.Hash);}catch{if(File.Exists(part))File.Delete(part);ParallelDownload.Clear(a,part,true);throw;}File.Move(part,dest);ParallelDownload.Clear(a,part,false);return dest;
  }
  public static bool GameRunning() { return Process.GetProcessesByName("PPSSPPWindows64").Length>0||Process.GetProcessesByName("PPSSPPWindows").Length>0; }
  public static string PspRoot(string memory) {string full=Path.GetFullPath(memory).TrimEnd(Path.DirectorySeparatorChar,Path.AltDirectorySeparatorChar);return String.Equals(Path.GetFileName(full),"PSP",StringComparison.OrdinalIgnoreCase)?full:Path.Combine(full,"PSP");}

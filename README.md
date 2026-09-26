@@ -2,11 +2,13 @@
 
 PSP 일본판 Fate/EXTRA(NPJH50247)용 비공식 한국어 패치입니다.
 
-**[최신 배포와 다운로드](https://github.com/sirecoymarsh/fate-extra-korean-patch/releases/tag/v8f-hd-v52-ui-v2)** — 본편 v8f · HD v52 · 선택 UI v2 · 런처1.4.1
+**[최신 배포와 다운로드](https://github.com/sirecoymarsh/fate-extra-korean-patch/releases/tag/v8f-hd-v52-ui-v2)** — 본편 v8f · HD v52 · 선택 UI v2 · 런처1.4.2
 
 ## 설치
 
-런처1.4.1 ZIP을 새 폴더에 풀고 실행합니다. 보유한 일본판 원본 ISO를 지정하고 설치할 항목을 선택한 뒤 **설치 / 업데이트**를 누르세요. HD/UI/치트/클리어 세이브는 PPSSPP 메모리스틱 폴더가 필요합니다.
+16MB 이상 파일은 **4개 구간을 동시에 다운로드**합니다. 각 구간을 이어받고 합친 파일을 검증하며, 서버가 구간 전송을 지원하지 않으면 일반 다운로드로 전환합니다.
+
+런처1.4.2 ZIP을 새 폴더에 풀고 실행합니다. 보유한 일본판 원본 ISO를 지정하고 설치할 항목을 선택한 뒤 **설치 / 업데이트**를 누르세요. HD/UI/치트/클리어 세이브는 PPSSPP 메모리스틱 폴더가 필요합니다.
 
 | 선택 | 화면 |
 | --- | --- |
@@ -21,7 +23,7 @@ PSP 일본판 Fate/EXTRA(NPJH50247)용 비공식 한국어 패치입니다.
 - 본편 v8f: 기존 v8e에서 매트릭스 압축 자료 11곳의 로딩 오류를 수정했습니다. 대사·글꼴·UI 배치는 v8e를 유지합니다.
 - HD v52: 승인한 v41~v52 그림 2,867장과 연결 정보 5,806개를 누적했습니다. 캐릭터, 매트릭스, 배경·소품, 문셀·최종전 돌기둥, 세이비어 눈동자, 디지털 숫자를 포함합니다.
 - UI v2: 별도 선택 UI 한국어화와 원래 UI 복원 자료입니다.
-- 런처1.4.1: 매트릭스 상세 화면의 감속·오디오 깨짐과 관련된 느린 인터프리터 설정을 JIT로 교정합니다. 기존 JIT/JIT-IR 선택을 유지합니다.
+- 런처1.4.2: 매트릭스 상세 화면의 감속·오디오 깨짐과 관련된 느린 인터프리터 설정을 JIT로 교정합니다. 기존 JIT/JIT-IR 선택을 유지합니다.
 
 **실험 v51a의 추가 본편 글꼴·문구·UI 위치 변경은 포함하지 않습니다.** 전체 최신 실험 ISO를 그대로 배포한 버전은 아닙니다.
 
@@ -35,7 +37,7 @@ HD/UI 설치 시 Fate/EXTRA 전용 설정에 렌더링 8배, MSAA 4배, 수직�
 
 ## 파일과 지원 원본
 
-- `Fate-Extra-Korean-Launcher-v1.4.1.zip`
+- `Fate-Extra-Korean-Launcher-v1.4.2.zip`
 - `Fate-Extra-Korean-Base-v8f.zip`
 - `Fate-Extra-Korean-HD-v52.z01` + `.zip` — 같은 폴더에 두고 ZIP에서 전체 압축 해제
 - `Fate-Extra-Korean-UI-v2.zip` — 런처로 적용/해제
