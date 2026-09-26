@@ -37,7 +37,7 @@ public sealed class LauncherForm : Form {
   memstick=PathRow(2,"메모리스틱 폴더",config.Memstick,true,"");dataRoot=PathRow(3,"본편·다운로드 폴더",config.DataRoot,true,"");
   var searchRow=new FlowLayoutPanel{Dock=DockStyle.Fill,WrapContents=false};outer.Controls.Add(searchRow,0,3);
   autoFind=Button("경로 자동 찾기",async()=>await FindPaths(false,false));folderFind=Button("폴더 안에서 찾기…",async()=>await FindPaths(false,true));foreach(var b in new[]{autoFind,folderFind}){b.Width=155;b.Height=33;searchRow.Controls.Add(b);}
-  graphics=Button("그래픽 기본 설정 적용",()=>ApplyGraphics());graphics.Width=192;graphics.Height=33;searchRow.Controls.Add(graphics);
+  graphics=Button("PPSSPP 기본 설정",()=>ApplyGraphics());graphics.Width=192;graphics.Height=33;searchRow.Controls.Add(graphics);
   uiRemove=Button("UI 한국어화 해제",()=>RemoveUI());uiRemove.Width=170;uiRemove.Height=33;uiRemove.Enabled=false;searchRow.Controls.Add(uiRemove);
   var options=new Panel{Dock=DockStyle.Fill,BackColor=panel,Padding=new Padding(12)};outer.Controls.Add(options,0,4);
   var optionsTitle=new Label{Text="설치할 항목",ForeColor=ink,AutoSize=true,Font=new Font(Font,FontStyle.Bold),Location=new Point(14,10)};options.Controls.Add(optionsTitle);
@@ -159,7 +159,7 @@ public sealed class LauncherForm : Form {
  async void ApplyGraphics() {
   if(busy)return;launchSetup=true;RefreshPathRequirements();if(memstick.Text.Trim()==""){SetMessage("설정을 적용할 메모리스틱 폴더를 지정한 뒤 다시 누르세요.");return;}
   cancel=new CancellationTokenSource();Busy(true);
-  try{engine=EngineForWork();await Task.Run(()=>engine.ConfigureDefaults());config=engine.Config;SetMessage("Fate/EXTRA 설정 적용: 8배 · MSAA 4배 · 수직동기화 · 텍스처 교체. 설치된 치트는 목록에서 선택하세요.");}
+  try{engine=EngineForWork();await Task.Run(()=>engine.ConfigureDefaults());config=engine.Config;SetMessage("Fate/EXTRA 설정 적용: JIT · 8배 · MSAA 4배 · 수직동기화 · 텍스처 교체. 설치된 치트는 목록에서 선택하세요.");}
   catch(Exception e){if(engine!=null)config=engine.Config;SetMessage(e.Message);}
   finally{Busy(false);cancel.Dispose();cancel=null;}
  }

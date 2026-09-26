@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "repository": "sirecoymarsh/fate-extra-korean-patch",
+  "release_tag": "v8f-hd-v52-ui-v2",
+  "minimum_launcher": "1.4.1",
+  "base_version": "v8f",
+  "hd_version": "HD-v52",
+  "base_root": "Fate-Extra-Korean-Base-v8f",
+  "hd_root": "Fate-Extra-Korean-HD-v52",
+  "patch_name": "Fate-Extra-Korean-v8f.xdelta",
+  "source": {
+    "bytes": 1280933888,
+    "sha256": "60399D610CBCDA96601374A2E621A22BB58505C403C6FA4221EEC5E87235667B"
+  },
+  "target": {
+    "bytes": 1979887616,
+    "sha256": "806CDF3A7B63A2DD09F4BC2F8AF62498689DA9D02F042085FC27403684D525A6"
+  },
+  "base_asset": {
+    "name": "Fate-Extra-Korean-Base-v8f.zip",
+    "bytes": 247456744,
+    "sha256": "B8F29A3E9EB118412029289680C0BEB040D1CD9209A08E9CE03F5F8BD24E8D28"
+  },
+  "hd_assets": [
+    {
+      "name": "Fate-Extra-Korean-HD-v52.z01",
+      "bytes": 1900000000,
+      "sha256": "DC89CE2563C7A90CD47952B5EB17CB492BF03CD79A9C637285E0402A8F8B0136"
+    },
+    {
+      "name": "Fate-Extra-Korean-HD-v52.zip",
+      "bytes": 153881251,
+      "sha256": "EE62CD9C3E136506FB593D916B28F66E37FE2F286F240B74B1CBEEBA766AE517"
+    }
+  ],
+  "notes": "본편 v8f 매트릭스 로딩 수정 + HD v52 누적 그림 복원 + 선택 UI v2. 런처1.4.1 필요. 실험 v51a의 다른 본편 변경은 미포함.",
+  "hardware_psp_verified": false,
+  "hd_textures_ini_sha256": "8619B92BC1294483AAE4A7AD120E1447CB651536785EC760FE698CD984FEC29F",
+  "ui_version": "UI-v2",
+  "ui_root": "Fate-Extra-Korean-UI-v2",
+  "ui_original_ini_sha256": "8619B92BC1294483AAE4A7AD120E1447CB651536785EC760FE698CD984FEC29F",
+  "ui_korean_ini_sha256": "6930CA9BD24F764B3BDC84CB6F7337E784716FA2485DFF64995475893D2B51BC",
+  "ui_asset": {
+    "name": "Fate-Extra-Korean-UI-v2.zip",
+    "bytes": 8439477,
+    "sha256": "68F56777C33A9D58AF44A0D7163CF6C8B034B8AB875D8F1CE7583CAD6E24E54E"
+  }
+}

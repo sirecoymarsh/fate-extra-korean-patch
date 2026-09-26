@@ -43,6 +43,16 @@ public sealed class UiPack {
  }
 }
 public static class PpssppSettings {
+ public static string Get(string text,string section,string key) {
+  bool inside=false;string value="";
+  foreach(string line in text.Replace("\r\n","\n").Split('\n')) {
+   var header=Regex.Match(line,@"^\s*\[([^\]]+)\]\s*$");
+   if(header.Success){inside=String.Equals(header.Groups[1].Value,section,StringComparison.OrdinalIgnoreCase);continue;}
+   var entry=Regex.Match(line,@"^\s*"+Regex.Escape(key)+@"\s*=\s*(.*?)\s*$",RegexOptions.IgnoreCase);
+   if(inside&&entry.Success)value=entry.Groups[1].Value;
+  }
+  return value;
+ }
  public static string Set(string text,string section,string key,string value) {
   string newline=text.Contains("\r\n")?"\r\n":"\n";var lines=text.Replace("\r\n","\n").Split('\n').ToList();
   bool inside=false,foundSection=false,foundKey=false;int insert=lines.Count;
@@ -55,6 +65,9 @@ public static class PpssppSettings {
   return String.Join(newline,lines)+(!lines.Last().EndsWith(newline)?newline:"");
  }
  public static string Preset(string text,bool graphics,bool cheats) {
+  // PPSSPP CPUCore: 0=Interpreter, 1=JIT, 2=IR Interpreter, 3=JIT using IR.
+  // Keep an existing JIT choice; avoid copying slow diagnostic cores into play profiles.
+  string core=Get(text,"CPU","CPUCore");if(core!="1"&&core!="3")text=Set(text,"CPU","CPUCore","1");
   if(graphics){text=Set(text,"Graphics","InternalResolution","8");text=Set(text,"Graphics","MultiSampleLevel","2");text=Set(text,"Graphics","VerticalSync","True");text=Set(text,"Graphics","ReplaceTextures","True");}
   if(cheats)text=Set(text,"General","EnableCheats","True");return text;
  }

@@ -31,6 +31,7 @@ public sealed class Settings {
  public string SourceIso="", Emulator="", Memstick="", DataRoot="";
  public string BaseVersion="", HdVersion="", HdBaseVersion="", CheatsVersion="", SaveVersion="", GameIso="";
  public string UiVersion="";
+ public string CpuDefaultsProfile="";
  public bool SelectBase=true, SelectHD=false, SelectUI=false, SelectCheats=false, SelectSave=false, GraphicsDefaultsApplied=false;
  public static Settings Load(string p) { return File.Exists(p)?Json.Serializer().Deserialize<Settings>(File.ReadAllText(p)):new Settings(); }
 }
@@ -74,7 +75,7 @@ public sealed class Journal {
  public string PreviousSettings; public bool Committed; public List<Swap> Operations=new List<Swap>();
 }
 public sealed class Engine {
- public const string Version="1.4.0",Repository="sirecoymarsh/fate-extra-korean-patch";
+ public const string Version="1.4.1",Repository="sirecoymarsh/fate-extra-korean-patch";
  public const string ReleaseRoot="https://github.com/"+Repository+"/releases/download/";
  public const string SourceHash="60399D610CBCDA96601374A2E621A22BB58505C403C6FA4221EEC5E87235667B";
  public const long SourceSize=1280933888;
@@ -148,7 +149,7 @@ public sealed class Engine {
  public static bool GameRunning() { return Process.GetProcessesByName("PPSSPPWindows64").Length>0||Process.GetProcessesByName("PPSSPPWindows").Length>0; }
  public static string PspRoot(string memory) {string full=Path.GetFullPath(memory).TrimEnd(Path.DirectorySeparatorChar,Path.AltDirectorySeparatorChar);return String.Equals(Path.GetFileName(full),"PSP",StringComparison.OrdinalIgnoreCase)?full:Path.Combine(full,"PSP");}
  public ProcessStartInfo GameStartInfo() {
-  if(GameRunning())throw new Exception("이미 PPSSPP가 실행 중입니다.");
+  if(RunningCheck())throw new Exception("이미 PPSSPP가 실행 중입니다.");
   RecoverPending();
   if(!File.Exists(Config.Emulator)||!File.Exists(Config.GameIso))throw new Exception("PPSSPP 경로와 설치된 본편을 확인해 주세요.");
   if(Config.Memstick=="")throw new Exception("메모리스틱 폴더를 지정해 주세요.");
@@ -166,7 +167,7 @@ public sealed class Engine {
   }
   if(!File.Exists(exe)||!Directory.Exists(Path.Combine(runtime,"assets")))throw new Exception("런처 내부 PPSSPP 복사본이 불완전합니다. 본편 폴더의 emulator 폴더를 옮긴 뒤 다시 실행해 주세요.");
   File.WriteAllText(Path.Combine(runtime,"installed.txt"),Path.GetFullPath(Config.Memstick),new UTF8Encoding(false));
-  if(!Config.GraphicsDefaultsApplied)ConfigureDefaults();
+  PreparePlaybackDefaults();
   return new ProcessStartInfo(exe,Quote(Config.GameIso)){UseShellExecute=false,WorkingDirectory=runtime};
  }
  string Tool(string name) {
@@ -223,7 +224,14 @@ public sealed class Engine {
   if(!File.Exists(ini)&&File.Exists(controls)&&!Regex.IsMatch(text,@"(?mi)^\s*\[ControlMapping\]\s*$"))text+="\r\n"+File.ReadAllText(controls);
   text=PpssppSettings.Preset(text,graphics,cheats);string stage=Path.Combine(work,"game-settings.ini");File.WriteAllText(stage,text,new UTF8Encoding(false));journal.Operations.Add(Prepare(ini,stage,id));
  }
- public void ConfigureDefaults() {
+ public void PreparePlaybackDefaults() {
+  RecoverPending();Check();
+  if(!Config.GraphicsDefaultsApplied)ConfigureDefaults();
+  else if(String.IsNullOrWhiteSpace(Config.Memstick))throw new Exception("메모리스틱 폴더를 지정하세요.");
+  else if(!String.Equals(Config.CpuDefaultsProfile,PspRoot(Config.Memstick),StringComparison.OrdinalIgnoreCase))ConfigureDefaults(false);
+ }
+ public void ConfigureDefaults() { ConfigureDefaults(true); }
+ void ConfigureDefaults(bool graphics) {
   RecoverPending();Check();if(RunningCheck())throw new Exception("PPSSPP를 종료한 뒤 설정을 적용하세요.");
   if(String.IsNullOrWhiteSpace(Config.Memstick))throw new Exception("메모리스틱 폴더를 지정하세요.");
   Config.Memstick=Path.GetFullPath(Config.Memstick);NoLinkParents(Config.Memstick);if(Config.Memstick==Path.GetPathRoot(Config.Memstick))throw new Exception("메모리스틱 폴더를 지정하세요.");
@@ -231,10 +239,10 @@ public sealed class Engine {
    Recover();string id=Guid.NewGuid().ToString("N"),work=Path.Combine(Root,"staging",id);Directory.CreateDirectory(work);
    var j=new Journal{PreviousSettings=Json.Serializer().Serialize(Config)};bool written=false;
    try {
-    string psp=PspRoot(Config.Memstick);PrepareGameSetting(j,psp,work,id,true,File.Exists(Path.Combine(psp,"Cheats","NPJH50247.ini")));
+    string psp=PspRoot(Config.Memstick);PrepareGameSetting(j,psp,work,id,graphics,graphics&&File.Exists(Path.Combine(psp,"Cheats","NPJH50247.ini")));
     Check();if(RunningCheck())throw new Exception("PPSSPP를 종료하세요.");Json.Write(JournalPath,j);written=true;
     foreach(var op in j.Operations){if(op.HadOld)Move(op.Target,op.Backup);Move(op.Staged,op.Target);}
-    Config.GraphicsDefaultsApplied=true;Json.Write(ConfigPath,Config);j.Committed=true;Json.Write(JournalPath,j);File.Delete(JournalPath);
+    if(graphics)Config.GraphicsDefaultsApplied=true;Config.CpuDefaultsProfile=psp;Json.Write(ConfigPath,Config);j.Committed=true;Json.Write(JournalPath,j);File.Delete(JournalPath);
    }catch{if(written){Rollback(j);Config=Json.Serializer().Deserialize<Settings>(j.PreviousSettings);Json.Write(ConfigPath,Config);File.Delete(JournalPath);}throw;}
    finally{foreach(var op in j.Operations)if(Exists(op.Staged))DeleteTree(op.Staged,Path.GetDirectoryName(op.Staged));DeleteTree(work,Path.Combine(Root,"staging"));}
   }
@@ -296,7 +304,7 @@ public sealed class Engine {
     if(installBase){Config.BaseVersion=r.BaseVersion;Config.GameIso=Path.Combine(Root,"games","Fate-Extra-Korean-"+r.BaseVersion+".iso");}
     if(installHD){Config.HdVersion=r.HdVersion;Config.HdBaseVersion=r.BaseVersion;}
     if(changeUI){Config.UiVersion=useUI?r.UiVersion:"";Config.HdVersion=r.HdVersion;Config.HdBaseVersion=r.BaseVersion;}
-    if(installHD||changeUI||installCheats)Config.GraphicsDefaultsApplied=true;
+    if(installHD||changeUI||installCheats){Config.GraphicsDefaultsApplied=true;Config.CpuDefaultsProfile=psp;}
     if(installCheats)Config.CheatsVersion=r.BaseVersion;if(installSave)Config.SaveVersion=r.BaseVersion;
     Json.Write(ConfigPath,Config);j.Committed=true;Json.Write(JournalPath,j);File.Delete(JournalPath);Say("선택한 항목 설치 완료",100);
    } catch {
