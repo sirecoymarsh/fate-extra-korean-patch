@@ -1,5 +1,5 @@
 {
-  "status": "PASS-local-package-and-application",
+  "status": "PASS-public-launcher150-base-download-and-application",
   "target": {
     "bytes": 1979887616,
     "sha256": "3F728BC2536A0D4E42B3EA440C9F7216A8D5146188644DCD5942B005C720C3F9"
@@ -110,7 +110,21 @@
     "compatibility_metadata_changed": true,
     "standalone_stale_target_hash_fixed": true
   },
-  "public_installation": "pending after publication; local exact-package application already passed",
+  "public_installation": {
+    "status": "PASS",
+    "release": "v8h-hd-v54-ui-v4",
+    "base_version": "v8h",
+    "target_sha256": "3F728BC2536A0D4E42B3EA440C9F7216A8D5146188644DCD5942B005C720C3F9",
+    "launcher_sha256": "EED97BA796A62C005527E590949E999948F00277C8360763F0F98A1AFD19642E",
+    "empty_cache": true,
+    "downloaded_from_public_github": true,
+    "full_virtual_hash_verified": true,
+    "generated_iso_files": 0,
+    "user_profile_touched": false,
+    "hd_ui_public_download_retested": false,
+    "hd_ui_local_full_install_verified_pngs": 26712,
+    "public_hd_ui_assets_sha256_verified": true
+  },
   "limitations": [
     "One Archer reproduction user-confirmed; site not identified",
     "Saber triggering scene not identified or played",
@@ -145,5 +159,7 @@
       "full_story_playthrough": false,
       "hd_ui_runtime_tested": false
     }
-  }
+  },
+  "published": true,
+  "release_url": "https://github.com/sirecoymarsh/fate-extra-korean-patch/releases/tag/v8h-hd-v54-ui-v4"
 }
