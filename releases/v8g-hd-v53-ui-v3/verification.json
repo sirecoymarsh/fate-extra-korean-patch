@@ -92,7 +92,22 @@
     "ui_clicks_tested": false
   },
   "public_installation": {
-    "status": "pending"
+    "status": "PASS",
+    "mode": "online",
+    "release": "v8g-hd-v53-ui-v3",
+    "launcher_assembly_sha256": "8809B2AD14F60BBDCA8ADF3F27E37A9ECE2C62326B280B7CE603C5A7DA2EAFF5",
+    "seconds": 582.7069672,
+    "base_iso_sha256": "A3D2727C9142020E2F9342D8D22548248EDD20EB8AC20532E486DC995A04F0B9",
+    "hd": true,
+    "optional_ui": true,
+    "ui_off_on": true,
+    "verified_pngs": 26712,
+    "downloaded_from_public_github": true,
+    "empty_cache": true,
+    "live_game_touched": false,
+    "real_emulator_started": false,
+    "isolated_process_guard_override": true,
+    "ui_clicks_tested": false
   },
   "limitations": [
     "No fresh game-scene replay",
@@ -102,5 +117,12 @@
   "portable_source_rebuild": {
     "status": "PASS",
     "sha256": "A3D2727C9142020E2F9342D8D22548248EDD20EB8AC20532E486DC995A04F0B9"
-  }
+  },
+  "status": "PASS-cumulative-package-and-installation",
+  "public_parallel_downloads": [
+    "Fate-Extra-Korean-Base-v8g.zip",
+    "Fate-Extra-Korean-HD-v53.z01",
+    "Fate-Extra-Korean-HD-v53.zip"
+  ],
+  "gui_automation_used": false
 }
