@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "repository": "sirecoymarsh/fate-extra-korean-patch",
+  "release_tag": "v8h-hd-v54-ui-v4",
+  "minimum_launcher": "1.4.2",
+  "base_version": "v8h",
+  "hd_version": "HD-v54",
+  "base_root": "Fate-Extra-Korean-Base-v8h",
+  "hd_root": "Fate-Extra-Korean-HD-v54",
+  "patch_name": "Fate-Extra-Korean-v8h.xdelta",
+  "source": {
+    "bytes": 1280933888,
+    "sha256": "60399D610CBCDA96601374A2E621A22BB58505C403C6FA4221EEC5E87235667B"
+  },
+  "target": {
+    "bytes": 1979887616,
+    "sha256": "3F728BC2536A0D4E42B3EA440C9F7216A8D5146188644DCD5942B005C720C3F9"
+  },
+  "base_asset": {
+    "name": "Fate-Extra-Korean-Base-v8h.zip",
+    "bytes": 247456527,
+    "sha256": "F45410A6C9174D76124B2EA9311E57DBB51342D05B27C5AEDF9B520B7810E334"
+  },
+  "hd_assets": [
+    {
+      "name": "Fate-Extra-Korean-HD-v54.z01",
+      "bytes": 1900000000,
+      "sha256": "F968AF628FDA5006C186A289AA25948CD68BBFAADB02C78F54212A5828931620"
+    },
+    {
+      "name": "Fate-Extra-Korean-HD-v54.zip",
+      "bytes": 153881088,
+      "sha256": "791CD2BDD9D7BDD71A265FE8334695BBD5843DDDACC57A59CE54C56F50278AAA"
+    }
+  ],
+  "notes": "아처 2곳·세이버 13곳 연출 명령 복원. 이전 아처 사례 1건 및 정상 세션 전투 진입·표시 사용자 확인. HD/UI 그림 유지. 런처1.5.0 외부 데이터 선택 지원.",
+  "hardware_psp_verified": false,
+  "hd_textures_ini_sha256": "8619B92BC1294483AAE4A7AD120E1447CB651536785EC760FE698CD984FEC29F",
+  "ui_version": "UI-v4",
+  "ui_root": "Fate-Extra-Korean-UI-v4",
+  "ui_original_ini_sha256": "8619B92BC1294483AAE4A7AD120E1447CB651536785EC760FE698CD984FEC29F",
+  "ui_korean_ini_sha256": "219C423B2CEE14970A81E8F1653DC919748379D82F7009C75AF6108900064337",
+  "ui_asset": {
+    "name": "Fate-Extra-Korean-UI-v4.zip",
+    "bytes": 8660232,
+    "sha256": "B57F47A72B330466A7B40CDC42C599AAEB44B96E205278861D13F7847B5267E3"
+  }
+}

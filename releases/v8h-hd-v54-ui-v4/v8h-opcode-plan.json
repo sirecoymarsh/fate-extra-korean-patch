@@ -1,0 +1,138 @@
+{
+  "schema": 1,
+  "source": {
+    "bytes": 1280933888,
+    "sha256": "60399D610CBCDA96601374A2E621A22BB58505C403C6FA4221EEC5E87235667B"
+  },
+  "component": {
+    "sha256": "3C41587B51B59F3DC8B4077EDBC04DE4288B2399DA517CE9412547A2CF5979A9",
+    "decoded_bytes": 1979887616,
+    "decoded_sha256": "A3D2727C9142020E2F9342D8D22548248EDD20EB8AC20532E486DC995A04F0B9"
+  },
+  "target": {
+    "bytes": 1979887616,
+    "sha256": "3F728BC2536A0D4E42B3EA440C9F7216A8D5146188644DCD5942B005C720C3F9"
+  },
+  "patches": [
+    {
+      "offset": 1680960592,
+      "before": "58310000",
+      "after": "18340000",
+      "owner": "chr/emi/0000.dat",
+      "dat_offset": 1008,
+      "reason": "restore native opcode misclassified as text pointer"
+    },
+    {
+      "offset": 1680961112,
+      "before": "58310000",
+      "after": "18340000",
+      "owner": "chr/emi/0000.dat",
+      "dat_offset": 1528,
+      "reason": "restore native opcode misclassified as text pointer"
+    },
+    {
+      "offset": 1691155172,
+      "before": "c8360000",
+      "after": "18320000",
+      "owner": "chr/ner/0000.dat",
+      "dat_offset": 644,
+      "reason": "restore native opcode misclassified as text pointer"
+    },
+    {
+      "offset": 1691155308,
+      "before": "c8360000",
+      "after": "18320000",
+      "owner": "chr/ner/0000.dat",
+      "dat_offset": 780,
+      "reason": "restore native opcode misclassified as text pointer"
+    },
+    {
+      "offset": 1691155340,
+      "before": "c8360000",
+      "after": "18320000",
+      "owner": "chr/ner/0000.dat",
+      "dat_offset": 812,
+      "reason": "restore native opcode misclassified as text pointer"
+    },
+    {
+      "offset": 1691155440,
+      "before": "c8360000",
+      "after": "18320000",
+      "owner": "chr/ner/0000.dat",
+      "dat_offset": 912,
+      "reason": "restore native opcode misclassified as text pointer"
+    },
+    {
+      "offset": 1691155504,
+      "before": "c8360000",
+      "after": "18320000",
+      "owner": "chr/ner/0000.dat",
+      "dat_offset": 976,
+      "reason": "restore native opcode misclassified as text pointer"
+    },
+    {
+      "offset": 1691155948,
+      "before": "c8360000",
+      "after": "18320000",
+      "owner": "chr/ner/0000.dat",
+      "dat_offset": 1420,
+      "reason": "restore native opcode misclassified as text pointer"
+    },
+    {
+      "offset": 1691156140,
+      "before": "c8360000",
+      "after": "18320000",
+      "owner": "chr/ner/0000.dat",
+      "dat_offset": 1612,
+      "reason": "restore native opcode misclassified as text pointer"
+    },
+    {
+      "offset": 1691156272,
+      "before": "c8360000",
+      "after": "18320000",
+      "owner": "chr/ner/0000.dat",
+      "dat_offset": 1744,
+      "reason": "restore native opcode misclassified as text pointer"
+    },
+    {
+      "offset": 1691156416,
+      "before": "c8360000",
+      "after": "18320000",
+      "owner": "chr/ner/0000.dat",
+      "dat_offset": 1888,
+      "reason": "restore native opcode misclassified as text pointer"
+    },
+    {
+      "offset": 1691156828,
+      "before": "c8360000",
+      "after": "18320000",
+      "owner": "chr/ner/0000.dat",
+      "dat_offset": 2300,
+      "reason": "restore native opcode misclassified as text pointer"
+    },
+    {
+      "offset": 1691157012,
+      "before": "c8360000",
+      "after": "18320000",
+      "owner": "chr/ner/0000.dat",
+      "dat_offset": 2484,
+      "reason": "restore native opcode misclassified as text pointer"
+    },
+    {
+      "offset": 1691157780,
+      "before": "c8360000",
+      "after": "18320000",
+      "owner": "chr/ner/0000.dat",
+      "dat_offset": 3252,
+      "reason": "restore native opcode misclassified as text pointer"
+    },
+    {
+      "offset": 1691157920,
+      "before": "c8360000",
+      "after": "18320000",
+      "owner": "chr/ner/0000.dat",
+      "dat_offset": 3392,
+      "reason": "restore native opcode misclassified as text pointer"
+    }
+  ]
+}

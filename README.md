@@ -2,7 +2,7 @@
 
 PSP 일본판 Fate/EXTRA(NPJH50247)용 비공식 한국어 패치입니다.
 
-**[최신 배포와 다운로드](https://github.com/sirecoymarsh/fate-extra-korean-patch/releases/tag/v8g-hd-v53-ui-v3)** — 본편 v8g · HD v53 · 선택 UI v3 · 런처1.5.0
+**[최신 배포와 다운로드](https://github.com/sirecoymarsh/fate-extra-korean-patch/releases/tag/v8h-hd-v54-ui-v4)** — 본편 v8h · HD v54 · 선택 UI v4 · 런처1.5.0
 
 ## 설치
 
@@ -22,12 +22,11 @@ PSP 일본판 Fate/EXTRA(NPJH50247)용 비공식 한국어 패치입니다.
 
 ## 이번 배포
 
-- 본편 v8g: 전투 음성 자막·필드 대사 명조체, 긴 이름 표시, 영어 기본 이름, ‘게이 볼그’ 표기, 원문의 문체를 보존한 트와이스 대사 수정, 매트릭스 로딩 수정을 누적했습니다.
-- HD v53: 승인한 v41~v52 그림 2,867장과 연결 정보 5,806개를 모두 유지하고 본편 v8g에 맞췄습니다. 캐릭터, 매트릭스, 배경·소품, 문셀·최종전 돌기둥, 세이비어 눈동자, 디지털 숫자를 포함합니다.
-- UI v3: 마스터 레벨의 한글 크기와 숫자 옆 배치, 상점 버튼 5개의 가운데 정렬을 반영했습니다. 상점 영어 표기는 유지합니다. UI 한국어화를 해제하면 원래 영문 UI로 돌아갑니다.
-- 런처1.5.0: 새 ISO 없이 원본과 외부 패치 데이터로 실행하는 선택지를 추가했습니다. 기존 ISO 생성 방식, 4구간 다운로드와 매트릭스 상세 화면 감속·오디오 깨짐 관련 CPU 설정 교정을 유지합니다. 기존 JIT/JIT-IR 선택은 보존합니다.
+- 본편 v8h: 문자열 재배치 과정에서 손상된 아처 2곳·세이버 13곳의 연출 명령을 원본으로 복원했습니다. 기존 v8g의 번역·글꼴·이름·매트릭스 수정은 유지합니다.
+- HD v54·선택 UI v4: v8h 호환성 정보 갱신이며 그림과 매핑은 HD v53·UI v3과 같습니다.
+- 런처 1.5.0: ISO 생성과 외부 데이터 로딩을 선택할 수 있습니다. 외부 방식은 실행 때도 원본 ISO가 필요합니다.
 
-앞선 v8f에서 빠졌던 승인된 본편 수정도 이번에 포함했습니다. UI 선택 기능과 함께 동작하도록 마스터 레벨·상점 정렬은 텍스처 안의 배치로 구현했습니다.
+이전에 멈추던 아처 사례 1건과 새 부팅 세션의 전투 진입·표시는 사용자가 정상 진행을 확인했습니다. 모든 아처·세이버 장면을 개별 재현한 검증은 아닙니다.
 
 ## PPSSPP 설정과 저장
 
@@ -40,11 +39,11 @@ HD/UI 설치 시 Fate/EXTRA 전용 설정에 렌더링 8배, MSAA 4배, 수직�
 ## 파일과 지원 원본
 
 - `Fate-Extra-Korean-Launcher-v1.5.0.zip`
-- `Fate-Extra-Korean-Base-v8g.zip`
-- `Fate-Extra-Korean-HD-v53.z01` + `.zip` — 같은 폴더에 두고 ZIP에서 전체 압축 해제
-- `Fate-Extra-Korean-UI-v3.zip` — 런처로 적용/해제
+- `Fate-Extra-Korean-Base-v8h.zip`
+- `Fate-Extra-Korean-HD-v54.z01` + `.zip` — 같은 폴더에 두고 ZIP에서 전체 압축 해제
+- `Fate-Extra-Korean-UI-v4.zip` — 런처로 적용/해제
 
-수동 본편 설치는 기본 팩의 `Apply-Patch.cmd`를 실행합니다. 원본 ISO를 보존하며 새 ISO를 만듭니다. 수동 HD 설치는 압축을 푼 `NPJH50247` 폴더를 메모리스틱의 `PSP/TEXTURES`에 넣습니다.
+수동 본편 설치는 기본 팩의 `Apply-Patch.cmd`를 실행해 일본판 원본 ISO를 선택합니다. 원본을 보존하며 같은 폴더에 `Fate-Extra-Korean-v8h.iso`를 생성합니다. 수동 HD 설치는 기존 폴더를 백업하고 압축을 푼 `NPJH50247` 폴더를 메모리스틱의 `PSP/TEXTURES`에 넣은 뒤 PPSSPP의 텍스처 교체를 켭니다. 수동 UI 설치는 UI ZIP의 `files/KoreanHD`를 해당 폴더에 합치고 `korean-textures.ini`를 `textures.ini`로 이름을 바꿔 덮어씁니다.
 
 지원 원본: NPJH50247, DISC_VERSION 1.01, 1,280,933,888바이트.
 

@@ -1,0 +1,149 @@
+{
+  "status": "PASS-local-package-and-application",
+  "target": {
+    "bytes": 1979887616,
+    "sha256": "3F728BC2536A0D4E42B3EA440C9F7216A8D5146188644DCD5942B005C720C3F9"
+  },
+  "source": {
+    "bytes": 1280933888,
+    "sha256": "60399D610CBCDA96601374A2E621A22BB58505C403C6FA4221EEC5E87235667B"
+  },
+  "changed_words": 15,
+  "changed_bytes": 30,
+  "unexplained_changes": 0,
+  "character_scripts": 7,
+  "container_references": 60,
+  "native_handler_cases": 30,
+  "native_dispatch_cases": 45,
+  "native_evidence_sha256": "0576109B74C5D8D415DC751216899953E291B4D90CDA61EECD7F1DB4FBBADD34",
+  "runtime": {
+    "date": "2026-09-28",
+    "observer": "user",
+    "artifact": "Fate-Extra-Korean-v8h.iso",
+    "artifact_sha256": "3F728BC2536A0D4E42B3EA440C9F7216A8D5146188644DCD5942B005C720C3F9",
+    "binding": "User follow-up to the v8h test launch; process hash not recaptured during play.",
+    "archer": {
+      "repaired_commands": 2,
+      "user_confirmed_reproductions": 1,
+      "observed_result": "normal progression",
+      "exact_opcode_site": "not identified"
+    },
+    "saber": {
+      "repaired_commands": 13,
+      "user_playtest": false,
+      "pre_fix_scene_reproduction": false,
+      "basis": "Additional native-command corruption discovered during Archer investigation"
+    },
+    "scope": "One Archer reproduction confirmed; no claim of both Archer sites or Saber route playthrough.",
+    "normal_session_battle_entry": {
+      "observer": "user",
+      "statement": "전투에 들어갔는데 잘 되는듯?",
+      "observed_at": "2026-09-28T03:09:52.2938604+09:00",
+      "build": "v8h",
+      "iso_sha256": "3F728BC2536A0D4E42B3EA440C9F7216A8D5146188644DCD5942B005C720C3F9",
+      "result": "Battle entry appears normal according to user.",
+      "limits": "Exact servant and encounter not recorded; no full battle completion or original failing-event coverage claimed."
+    },
+    "additional_user_confirmation": "응 잘 나온다"
+  },
+  "local_installation": {
+    "status": "PASS",
+    "mode": "local",
+    "release": "v8h-hd-v54-ui-v4",
+    "launcher_assembly_sha256": "8809B2AD14F60BBDCA8ADF3F27E37A9ECE2C62326B280B7CE603C5A7DA2EAFF5",
+    "seconds": 913.5116807999999,
+    "base_iso_sha256": "3F728BC2536A0D4E42B3EA440C9F7216A8D5146188644DCD5942B005C720C3F9",
+    "hd": true,
+    "optional_ui": true,
+    "ui_off_on": true,
+    "verified_pngs": 26712,
+    "downloaded_from_public_github": false,
+    "empty_cache": false,
+    "live_game_touched": false,
+    "real_emulator_started": false,
+    "isolated_process_guard_override": true,
+    "ui_clicks_tested": false
+  },
+  "standalone_patch_application": {
+    "status": "PASS",
+    "target": {
+      "bytes": 1979887616,
+      "sha256": "3F728BC2536A0D4E42B3EA440C9F7216A8D5146188644DCD5942B005C720C3F9"
+    },
+    "input_package": {
+      "name": "Fate-Extra-Korean-Base-v8h.zip",
+      "bytes": 247456527,
+      "sha256": "F45410A6C9174D76124B2EA9311E57DBB51342D05B27C5AEDF9B520B7810E334"
+    },
+    "script_sha256": "889834A96ABAF492C182D7688551437EDECF98D1EC76310A92BE51A3CB019FDE"
+  },
+  "packages": {
+    "base": {
+      "name": "Fate-Extra-Korean-Base-v8h.zip",
+      "bytes": 247456527,
+      "sha256": "F45410A6C9174D76124B2EA9311E57DBB51342D05B27C5AEDF9B520B7810E334"
+    },
+    "hd": [
+      {
+        "name": "Fate-Extra-Korean-HD-v54.z01",
+        "bytes": 1900000000,
+        "sha256": "F968AF628FDA5006C186A289AA25948CD68BBFAADB02C78F54212A5828931620"
+      },
+      {
+        "name": "Fate-Extra-Korean-HD-v54.zip",
+        "bytes": 153881088,
+        "sha256": "791CD2BDD9D7BDD71A265FE8334695BBD5843DDDACC57A59CE54C56F50278AAA"
+      }
+    ],
+    "ui": {
+      "name": "Fate-Extra-Korean-UI-v4.zip",
+      "bytes": 8660232,
+      "sha256": "B57F47A72B330466A7B40CDC42C599AAEB44B96E205278861D13F7847B5267E3"
+    },
+    "launcher": {
+      "name": "Fate-Extra-Korean-Launcher-v1.5.0.zip",
+      "bytes": 838436,
+      "sha256": "5AB950E193DDB185F11D78034F31F546D21497F00BB2A5942791C942C340C16E"
+    },
+    "installed_pngs": 26712,
+    "artwork_and_mapping_changes": 0,
+    "compatibility_metadata_changed": true,
+    "standalone_stale_target_hash_fixed": true
+  },
+  "public_installation": "pending after publication; local exact-package application already passed",
+  "limitations": [
+    "One Archer reproduction user-confirmed; site not identified",
+    "Saber triggering scene not identified or played",
+    "No full-route or hardware PSP verification"
+  ],
+  "user_release_decision": {
+    "statement": "아주 중요한 거잖아 당장 올려",
+    "date": "2026-09-27T20:49:14.913848+00:00",
+    "scope": "Publish this v8h correction now with the recorded gameplay coverage limits; no all-scene verification claim."
+  },
+  "launcher_1_5_0": {
+    "exe_sha256": "EED97BA796A62C005527E590949E999948F00277C8360763F0F98A1AFD19642E",
+    "external_installation": {
+      "status": "PASS",
+      "assertions": 967,
+      "target_sha256": "3F728BC2536A0D4E42B3EA440C9F7216A8D5146188644DCD5942B005C720C3F9",
+      "generated_iso_files": 0
+    },
+    "iso_installation": {
+      "status": "PASS",
+      "target_sha256": "3F728BC2536A0D4E42B3EA440C9F7216A8D5146188644DCD5942B005C720C3F9",
+      "legacy_install_preserved": true,
+      "external_profile_touched": false
+    },
+    "runtime_scope": {
+      "normal_boot": true,
+      "normal_title_save_load": true,
+      "korean_dialogue_observed": true,
+      "arena_transition": true,
+      "field_input": true,
+      "helper_exited": true,
+      "full_story_playthrough": false,
+      "hd_ui_runtime_tested": false
+    }
+  }
+}
