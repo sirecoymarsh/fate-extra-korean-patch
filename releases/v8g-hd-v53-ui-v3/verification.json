@@ -1,0 +1,106 @@
+{
+  "schema": 1,
+  "release": "v8g-hd-v53-ui-v3",
+  "build": {
+    "status": "PASS-built-final-write-verified",
+    "version": "v8g",
+    "source": {
+      "bytes": 1280933888,
+      "sha256": "60399D610CBCDA96601374A2E621A22BB58505C403C6FA4221EEC5E87235667B"
+    },
+    "target": {
+      "bytes": 1979887616,
+      "sha256": "A3D2727C9142020E2F9342D8D22548248EDD20EB8AC20532E486DC995A04F0B9"
+    },
+    "changed_bytes": 55893,
+    "spans": 2958,
+    "unexplained_changes": 0,
+    "all_adopted_native_scopes_included": true,
+    "active_game_modified": false,
+    "runtime_scenes_verified": false
+  },
+  "native": {
+    "status": "PASS",
+    "target_sha256": "A3D2727C9142020E2F9342D8D22548248EDD20EB8AC20532E486DC995A04F0B9",
+    "font_selection_mips_cases": 10,
+    "name_native_consumer_cases": 16,
+    "unmarked_name_controls": 6,
+    "eboot_relocations": 2,
+    "term_occurrences": 469,
+    "term_banks": 67,
+    "Matrix_native_decoded_copies": 11,
+    "Matrix_canaries_intact": true,
+    "Twice_reviewed_units": 430,
+    "Twice_revised_units": 369,
+    "Twice_typed_references": 1283,
+    "Twice_accepted_bytes_exact": true,
+    "cpk_matches_accepted_experiment": true,
+    "ui_external_consumers": 0,
+    "ui_mapping_keys": 26,
+    "runtime_game_scenes_replayed": false
+  },
+  "packages": {
+    "base": {
+      "name": "Fate-Extra-Korean-Base-v8g.zip",
+      "bytes": 247455790,
+      "sha256": "D77F0D0BCC5A7DFC520005D74CB83C230BC629FC0D6BC25565F68A8E6BBD27F8"
+    },
+    "hd": [
+      {
+        "name": "Fate-Extra-Korean-HD-v53.z01",
+        "bytes": 1900000000,
+        "sha256": "B88CCA93B051D582FCD31F884AF170136C4D857A2E26EF83475F417B91BB51BC"
+      },
+      {
+        "name": "Fate-Extra-Korean-HD-v53.zip",
+        "bytes": 153881155,
+        "sha256": "48ADFAE81EC51E089ADF1FEF84A647820AB17F547B716BBFA3AA9F4FF5789EE5"
+      }
+    ],
+    "ui": {
+      "name": "Fate-Extra-Korean-UI-v3.zip",
+      "bytes": 8461187,
+      "sha256": "A2FE7D14DB05345CDEF7ADF3CABE9BB0E378CC4D50FBB5371E7F42B4B4FF6028"
+    },
+    "launcher": {
+      "name": "Fate-Extra-Korean-Launcher-v1.4.2.zip",
+      "bytes": 831859,
+      "sha256": "5F7579C99F29BDA0AE66ECB6667A77EA6841E0ABF7C91B46482539A75385705D"
+    },
+    "installed_pngs": 26712,
+    "latest_accepted_art": 2867,
+    "old_HD_pixels_unchanged": true,
+    "ui_layout_keys_changed": 26,
+    "declared_png_union_including_unused_variant_files": 26718
+  },
+  "local_installation": {
+    "status": "PASS",
+    "mode": "local",
+    "release": "v8g-hd-v53-ui-v3",
+    "launcher_assembly_sha256": "8809B2AD14F60BBDCA8ADF3F27E37A9ECE2C62326B280B7CE603C5A7DA2EAFF5",
+    "seconds": 337.5327058,
+    "base_iso_sha256": "A3D2727C9142020E2F9342D8D22548248EDD20EB8AC20532E486DC995A04F0B9",
+    "hd": true,
+    "optional_ui": true,
+    "ui_off_on": true,
+    "verified_pngs": 26712,
+    "downloaded_from_public_github": false,
+    "empty_cache": false,
+    "live_game_touched": false,
+    "real_emulator_started": false,
+    "isolated_process_guard_override": true,
+    "ui_clicks_tested": false
+  },
+  "public_installation": {
+    "status": "pending"
+  },
+  "limitations": [
+    "No fresh game-scene replay",
+    "No GUI button automation",
+    "No hardware PSP verification"
+  ],
+  "portable_source_rebuild": {
+    "status": "PASS",
+    "sha256": "A3D2727C9142020E2F9342D8D22548248EDD20EB8AC20532E486DC995A04F0B9"
+  }
+}
