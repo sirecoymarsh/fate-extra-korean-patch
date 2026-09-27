@@ -1,0 +1,11 @@
+# External data mode, 1.5.0
+
+The original ISO and existing xdelta release package remain the inputs. xdelta writes to a binary pipe; the installer hashes the complete output while classifying 64 KiB blocks as original-at-same-offset, zero, or patch payload. It coalesces extents, writes patch.bin and a manifest, validates extents and both input hashes, and hashes the virtual output independently. No target ISO is written in external mode. Payload granularity is intentionally simple; it is not a minimum-size delta.
+
+Installation uses the existing staging/journal/rollback mechanism. UseExternalData is the next install selection; nonempty GameData identifies the installed external representation. Existing settings default to ISO mode. Conversions retain previous installation files.
+
+On launch, the same EXE runs a private helper, holds the install lock and source/payload read handles, validates all hashes, and binds an ephemeral IPv4 loopback TCP listener. The capability path includes a random token and target hash. Only the exact image route is served; HEAD and single byte ranges implement PPSSPP's HTTPFileLoader contract. No filesystem URL routing exists. Responses are bounded by the declared image and streamed with 64 KiB buffers. Only 16 concurrent connections are admitted. Image-read errors are recorded separately from client disconnects.
+
+The helper reports ready and cannot launch until the parent writes the commit marker. Cancellation/timeout before commit kills only that helper; it cannot launch a child. After commit, the helper owns the emulator lifetime, independent of the launcher window. It drains connections and releases the port/handles when PPSSPP exits. A crash or forced termination of the helper can interrupt play; normal launcher closure does not terminate it.
+
+Source contract reviewed: https://github.com/hrydgard/ppsspp/blob/v1.20.4/Core/FileLoaders/HTTPFileLoader.cpp . The localhost transport uses no PPSSPP fork, kernel plugin, new game code hook, or external network endpoint. Full-byte equivalence covers content; actual normal boot/load/scene-transition evidence covers the new transport boundary. Full gameplay regression and HD runtime combinations remain separately scoped.

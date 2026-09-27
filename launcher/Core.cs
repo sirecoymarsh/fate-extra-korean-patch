@@ -31,6 +31,8 @@ public sealed class Settings {
  public string SourceIso="", Emulator="", Memstick="", DataRoot="";
  public string BaseVersion="", HdVersion="", HdBaseVersion="", CheatsVersion="", SaveVersion="", GameIso="";
  public string UiVersion="";
+ public bool UseExternalData=false;
+ public string GameData="",GameDataHash="",GameTargetHash="";
  public string CpuDefaultsProfile="";
  public bool SelectBase=true, SelectHD=false, SelectUI=false, SelectCheats=false, SelectSave=false, GraphicsDefaultsApplied=false;
  public static Settings Load(string p) { return File.Exists(p)?Json.Serializer().Deserialize<Settings>(File.ReadAllText(p)):new Settings(); }
@@ -75,7 +77,7 @@ public sealed class Journal {
  public string PreviousSettings; public bool Committed; public List<Swap> Operations=new List<Swap>();
 }
 public sealed class Engine {
- public const string Version="1.4.2",Repository="sirecoymarsh/fate-extra-korean-patch";
+ public const string Version="1.5.0",Repository="sirecoymarsh/fate-extra-korean-patch";
  public const string ReleaseRoot="https://github.com/"+Repository+"/releases/download/";
  public const string SourceHash="60399D610CBCDA96601374A2E621A22BB58505C403C6FA4221EEC5E87235667B";
  public const long SourceSize=1280933888;
@@ -149,10 +151,13 @@ public sealed class Engine {
  }
  public static bool GameRunning() { return Process.GetProcessesByName("PPSSPPWindows64").Length>0||Process.GetProcessesByName("PPSSPPWindows").Length>0; }
  public static string PspRoot(string memory) {string full=Path.GetFullPath(memory).TrimEnd(Path.DirectorySeparatorChar,Path.AltDirectorySeparatorChar);return String.Equals(Path.GetFileName(full),"PSP",StringComparison.OrdinalIgnoreCase)?full:Path.Combine(full,"PSP");}
- public ProcessStartInfo GameStartInfo() {
+ public static bool HasGame(Settings config){return File.Exists(config.GameData!=""?config.GameData:config.GameIso);}
+ public ProcessStartInfo GameStartInfo(string bootTarget=null) {
   if(RunningCheck())throw new Exception("이미 PPSSPP가 실행 중입니다.");
   RecoverPending();
-  if(!File.Exists(Config.Emulator)||!File.Exists(Config.GameIso))throw new Exception("PPSSPP 경로와 설치된 본편을 확인해 주세요.");
+  if(!File.Exists(Config.Emulator)||!HasGame(Config))throw new Exception("PPSSPP 경로와 설치된 본편을 확인해 주세요.");
+  if(Config.GameData!="") {Uri uri;if(bootTarget==null||!Uri.TryCreate(bootTarget,UriKind.Absolute,out uri)||uri.Scheme!="http"||uri.Host!="127.0.0.1")throw new Exception("외부 데이터는 런처의 게임 실행 버튼으로 시작하세요.");}
+  else if(bootTarget!=null)throw new Exception("ISO 설치에는 외부 주소를 사용할 수 없습니다.");
   if(Config.Memstick=="")throw new Exception("메모리스틱 폴더를 지정해 주세요.");
   NoLinkParents(Config.Memstick);Directory.CreateDirectory(Config.Memstick);string probe=Path.Combine(Config.Memstick,".fate-write-"+Guid.NewGuid().ToString("N"));File.WriteAllText(probe,"");File.Delete(probe);
   string sourceDir=Path.GetDirectoryName(Config.Emulator),assets=Path.Combine(sourceDir,"assets");if(!Directory.Exists(assets))throw new Exception("PPSSPP의 assets 폴더가 없습니다. PPSSPP 배포본 전체를 압축 해제해 주세요.");
@@ -169,7 +174,15 @@ public sealed class Engine {
   if(!File.Exists(exe)||!Directory.Exists(Path.Combine(runtime,"assets")))throw new Exception("런처 내부 PPSSPP 복사본이 불완전합니다. 본편 폴더의 emulator 폴더를 옮긴 뒤 다시 실행해 주세요.");
   File.WriteAllText(Path.Combine(runtime,"installed.txt"),Path.GetFullPath(Config.Memstick),new UTF8Encoding(false));
   PreparePlaybackDefaults();
-  return new ProcessStartInfo(exe,Quote(Config.GameIso)){UseShellExecute=false,WorkingDirectory=runtime};
+  return new ProcessStartInfo(exe,Quote(bootTarget??Config.GameIso)){UseShellExecute=false,WorkingDirectory=runtime};
+ }
+ public ExternalTicket StartExternalSession() {
+  if(RunningCheck())throw new Exception("이미 PPSSPP가 실행 중입니다.");
+  PreparePlaybackDefaults();
+  string sessions=Path.Combine(Root,"sessions");NoLinkParents(sessions);Directory.CreateDirectory(sessions);
+  string request=Path.Combine(sessions,Guid.NewGuid().ToString("N")+".json");Json.Write(request,Config);
+  var helper=Process.Start(new ProcessStartInfo(typeof(Engine).Assembly.Location,"--external-session "+Quote(request)){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden});
+  return new ExternalTicket(request,helper);
  }
  string Tool(string name) {
   var hashes=Json.Parse(File.ReadAllText(Path.Combine(ToolRoot,"tools.json")));string p=Path.Combine(ToolRoot,name);
@@ -275,8 +288,15 @@ public sealed class Engine {
      var pi=Json.Map(pack["patch"]);if(Json.S(pi,"path")!=r.PatchName)throw new Exception("패치 이름 불일치");patch=Path.Combine(packDir,r.PatchName);Verify(patch,Json.N(pi,"bytes"),Json.S(pi,"sha256"));
     }
     if(installBase) {
-     Check();Say("본편 패치 적용 중 · 원본은 보존됩니다");string iso=Path.Combine(work,"game.iso");Run(Tool("xdelta3.exe"),"-d -s "+Quote(Config.SourceIso)+" "+Quote(patch)+" "+Quote(iso));Say("완성된 본편 확인");Verify(iso,r.TargetBytes,r.TargetHash);
-     j.Operations.Add(Prepare(Path.Combine(Root,"games","Fate-Extra-Korean-"+r.BaseVersion+".iso"),iso,id));
+     Check();
+     if(Config.UseExternalData) {
+      string data=Path.Combine(work,"external");Say("외부 패치 데이터 준비 · 새 ISO 파일을 저장하지 않습니다");
+      ExternalBuilder.Decode(Tool("xdelta3.exe"),patch,Config.SourceIso,data,r.TargetBytes,r.TargetHash,Cancel,(s,p)=>Say(s,p));
+      j.Operations.Add(Prepare(Path.Combine(Root,"games","Fate-Extra-Korean-"+r.BaseVersion+"-external"),data,id));
+     }else{
+      Say("본편 패치 적용 중 · 원본은 보존됩니다");string iso=Path.Combine(work,"game.iso");Run(Tool("xdelta3.exe"),"-d -s "+Quote(Config.SourceIso)+" "+Quote(patch)+" "+Quote(iso));Say("완성된 본편 확인");Verify(iso,r.TargetBytes,r.TargetHash);
+      j.Operations.Add(Prepare(Path.Combine(Root,"games","Fate-Extra-Korean-"+r.BaseVersion+".iso"),iso,id));
+     }
     }
     string textureStage="";
     if(installHD) {
@@ -302,7 +322,10 @@ public sealed class Engine {
     Check();if(RunningCheck())throw new Exception("PPSSPP가 실행되어 적용을 미뤘습니다. 종료 후 다시 눌러 주세요.");
     Say("설치 적용 중 · 기존 파일은 옆에 백업됩니다");Json.Write(JournalPath,j);journalWritten=true;
     foreach(var op in j.Operations){if(op.HadOld)Move(op.Target,op.Backup);Move(op.Staged,op.Target);}
-    if(installBase){Config.BaseVersion=r.BaseVersion;Config.GameIso=Path.Combine(Root,"games","Fate-Extra-Korean-"+r.BaseVersion+".iso");}
+    if(installBase){Config.BaseVersion=r.BaseVersion;Config.GameTargetHash=r.TargetHash;
+     Config.GameData=Config.UseExternalData?Path.Combine(Root,"games","Fate-Extra-Korean-"+r.BaseVersion+"-external","manifest.json"):"";
+     Config.GameDataHash=Config.UseExternalData?Hash(Config.GameData):"";
+     Config.GameIso=Config.UseExternalData?"":Path.Combine(Root,"games","Fate-Extra-Korean-"+r.BaseVersion+".iso");}
     if(installHD){Config.HdVersion=r.HdVersion;Config.HdBaseVersion=r.BaseVersion;}
     if(changeUI){Config.UiVersion=useUI?r.UiVersion:"";Config.HdVersion=r.HdVersion;Config.HdBaseVersion=r.BaseVersion;}
     if(installHD||changeUI||installCheats){Config.GraphicsDefaultsApplied=true;Config.CpuDefaultsProfile=psp;}

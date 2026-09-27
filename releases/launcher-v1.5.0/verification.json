@@ -1,0 +1,56 @@
+{
+  "version": "1.5.0",
+  "scope": "Launcher-only update. The current public game remains v8g / HD-v53 / UI-v3. No game patch, image, save or emulator is included.",
+  "package": {
+    "name": "Fate-Extra-Korean-Launcher-v1.5.0.zip",
+    "bytes": 838436,
+    "sha256": "5AB950E193DDB185F11D78034F31F546D21497F00BB2A5942791C942C340C16E"
+  },
+  "exe_sha256": "EED97BA796A62C005527E590949E999948F00277C8360763F0F98A1AFD19642E",
+  "source_sha256": {
+    "Core.cs": "3C492C5861F18E213639EA41E3CC0D492EFACA850C55242A21F6BB78DBE3605D",
+    "Launcher.cs": "319CB92F8FE9CC11F86850BCF0D293402FD11FE0A6C84833715D5D1126EE3C1D",
+    "ExternalData.cs": "6506533231F4D910B39A9E386312E62C8205652EAB088E5916737C539F89F309",
+    "AssemblyInfo.cs": "DC08BE43D461393B11002FF8B2B27B8A641C3ABAF8AACDB1341C856BB8E09103",
+    "build.ps1": "734A18817BC6251AB5D46B4C3A7D2D0CC4DF8C022714E118522A43135B4F5E6F",
+    "ParallelDownload.cs": "8248D6F2B78973695B781E69C3DD983AF4A887320371F29C2328DD4754613F47",
+    "UiPack.cs": "175AADE6FAA202EB93847AC976178E0CFE072B2A62AE1AC3DE0B7B1090A55D8D",
+    "Discovery.cs": "0A7A1795A7D8E4E831FEECB7D960D2E97349A1A78A0F7CC01A6412604776C482",
+    "app.manifest": "DAC66830550D0F94E4F66A1F73278BD0BB640E1A80ADE7A07F32304E2983D404"
+  },
+  "public_v8g_installation": {
+    "status": "PASS",
+    "release": "v8g-hd-v53-ui-v3",
+    "base_version": "v8g",
+    "target_sha256": "A3D2727C9142020E2F9342D8D22548248EDD20EB8AC20532E486DC995A04F0B9",
+    "launcher_sha256": "EED97BA796A62C005527E590949E999948F00277C8360763F0F98A1AFD19642E",
+    "empty_cache": true,
+    "downloaded_from_public_github": true,
+    "full_virtual_hash_verified": true,
+    "generated_iso_files": 0,
+    "user_profile_touched": false
+  },
+  "v8h_local_checks": {
+    "assertions": 967,
+    "generated_iso_files": 0,
+    "virtual_iso_sha256": "3F728BC2536A0D4E42B3EA440C9F7216A8D5146188644DCD5942B005C720C3F9",
+    "runtime": {
+      "ppsspp": "1.20.4",
+      "normal_boot": true,
+      "normal_save_load": true,
+      "korean_dialogue": true,
+      "arena_entry_and_movement": true,
+      "helper_exit": true,
+      "full_story_playthrough": false,
+      "hd_ui_runtime_tested": false
+    }
+  },
+  "regression_checks": {
+    "existing_installer": 26,
+    "cpu_defaults": 27,
+    "gui_and_launch_status": 12
+  },
+  "runtime_final_revision_note": "Launcher UI launch-status reporting only; 12 GUI/status checks passed on final binary. Data builder/reader/transport/helper unchanged.",
+  "original_iso_modified": false,
+  "public_gameplay_replay_claim": false
+}

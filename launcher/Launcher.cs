@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Drawing;
 using System.Linq;
@@ -15,6 +15,7 @@ public sealed class LauncherForm : Form {
  bool busy,preview,shown,launchSetup,previousExtras,previousBase; Control source,emulator,memstick,dataRoot;TextBox log;DiscoveryResult discoveries;string automaticMemory="";
  Label current,available,message,selectionSummary;
  CheckBox baseBox,hdBox,uiBox,cheatsBox,saveBox;
+ ComboBox installMode;
  Button check,install,play,stop,autoFind,folderFind,uiRemove,graphics; ProgressBar bar; TableLayoutPanel paths,components;
  readonly Color bg=Color.FromArgb(9,20,34),panel=Color.FromArgb(17,36,55),ink=Color.FromArgb(224,239,249),muted=Color.FromArgb(152,179,198),cyan=Color.FromArgb(77,220,239);
  public LauncherForm(string root,bool previewMode) {
@@ -42,7 +43,9 @@ public sealed class LauncherForm : Form {
   var options=new Panel{Dock=DockStyle.Fill,BackColor=panel,Padding=new Padding(12)};outer.Controls.Add(options,0,4);
   var optionsTitle=new Label{Text="설치할 항목",ForeColor=ink,AutoSize=true,Font=new Font(Font,FontStyle.Bold),Location=new Point(14,10)};options.Controls.Add(optionsTitle);
   components=new TableLayoutPanel{Dock=DockStyle.Bottom,Height=70,ColumnCount=5,RowCount=2};for(int i=0;i<5;i++)components.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,20));options.Controls.Add(components);
-  baseBox=Option(0,"본편 한국어 패치","원본 ISO로 새 본편 생성",config.SelectBase);hdBox=Option(1,"HD 고화질 팩","원래 영문 UI 유지 · 2.1 GB",config.SelectHD);
+  installMode=new ComboBox{DropDownStyle=ComboBoxStyle.DropDownList,Location=new Point(390,7),Width=430,BackColor=bg,ForeColor=ink};
+  installMode.Items.AddRange(new object[]{"설치 방식: ISO 파일 생성","설치 방식: 외부 데이터 로딩 · ISO 생성 안 함"});installMode.SelectedIndex=config.UseExternalData?1:0;options.Controls.Add(installMode);
+  baseBox=Option(0,"본편 한국어 패치","위에서 설치 방식 선택",config.SelectBase);hdBox=Option(1,"HD 고화질 팩","원래 영문 UI 유지 · 2.1 GB",config.SelectHD);
   uiBox=Option(2,"UI 한국어화","아이콘·전투 메시지 · 8.5 MB",config.SelectUI);
   cheatsBox=Option(3,"치트","치트 사용 켬 · 개별 선택",config.SelectCheats);saveBox=Option(4,"클리어 세이브","캐스터 Lv.52 · DATA80",config.SelectSave);
   selectionSummary=Label("선택한 자료만 설치합니다. 기존 HD·치트·세이브는 자동 백업합니다.",muted);selectionSummary.Font=new Font("맑은 고딕",9);outer.Controls.Add(selectionSummary,0,5);
@@ -59,15 +62,18 @@ public sealed class LauncherForm : Form {
   RefreshInstalled();FormClosing+=(s,e)=>{if(busy){e.Cancel=true;if(cancel!=null)cancel.Cancel();SetMessage("작업을 취소하고 정리하는 중입니다. 완료 후 창을 닫아 주세요.");}else if(!preview){try{CaptureSettings();Json.Write(settingsPath,config);}catch{}}};
   previousExtras=cheatsBox.Checked||saveBox.Checked;previousBase=baseBox.Checked;
   foreach(var option in new[]{baseBox,hdBox,uiBox,cheatsBox,saveBox})option.CheckedChanged+=SelectionChanged;
+  installMode.SelectedIndexChanged+=(s,e)=>RefreshPathRequirements();
   RefreshPathRequirements();
   if(!preview)Shown+=async(s,e)=>{shown=true;await FindPaths(true,false);CheckLatest();};else{available.Text="배포 중  v8e + HD-v39 + UI-v1\n한국어 UI는 선택해서 설치";current.Text="본편 v8e · HD HD-v39\nUI 한국어화 미설치\n치트 미설치 · 클리어 세이브 미설치";log.Text="선택한 설치 항목에 필요한 경로만 확인합니다.\r\n치트·클리어 세이브를 선택하면 PPSSPP·메모리스틱 자동 탐색을 시작합니다.";}
  }
  void RefreshPathRequirements() {
   bool extras=cheatsBox.Checked||saveBox.Checked;bool memory=extras||hdBox.Checked||uiBox.Checked||launchSetup;
-  bool[] enabled={baseBox.Checked,extras||launchSetup,memory,true};
+  installMode.Enabled=!busy&&baseBox.Checked;
+  bool[] enabled={baseBox.Checked||(launchSetup&&config.GameData!=""),extras||launchSetup,memory,true};
   for(int row=0;row<4;row++)for(int col=0;col<3;col++)paths.GetControlFromPosition(col,row).Enabled=enabled[row];
   autoFind.Enabled=folderFind.Enabled=!busy&&(baseBox.Checked||extras||launchSetup);
   selectionSummary.Text=extras?"치트·세이브 설치에는 메모리스틱이 필요합니다. PPSSPP는 위치를 찾을 때 사용합니다.":uiBox.Checked?"UI 한국어화는 선택 사항입니다. 처음 설치할 때 HD 고화질 팩도 함께 선택하세요.":hdBox.Checked?"HD 고화질 팩만 설치하면 원래 영문 UI를 유지합니다. 설치할 메모리스틱을 지정하세요.":baseBox.Checked?"본편 설치에는 원본 ISO만 필요합니다. PPSSPP·메모리스틱은 찾지 않습니다.":"설치할 항목을 선택하세요.";
+  if(baseBox.Checked&&installMode.SelectedIndex==1)selectionSummary.Text="외부 데이터 방식은 실행할 때도 원본 ISO가 필요합니다. HD·UI는 같은 방식으로 선택 설치합니다.";
  }
  async void SelectionChanged(object sender,EventArgs e) {
   bool extras=cheatsBox.Checked||saveBox.Checked;
@@ -132,12 +138,13 @@ public sealed class LauncherForm : Form {
   string memory=memstick.Text.Trim();if(installed&&config.Memstick!=""&&!String.Equals(memory,config.Memstick,StringComparison.OrdinalIgnoreCase))throw new Exception("설치한 메모리스틱 폴더는 여기서 옮길 수 없습니다. 새 폴더에서 런처를 따로 시작하세요.");
   config.SourceIso=source.Text.Trim();config.Emulator=emulator.Text.Trim();config.Memstick=memory;
   config.DataRoot=next;config.SelectBase=baseBox.Checked;config.SelectHD=hdBox.Checked;config.SelectUI=uiBox.Checked;config.SelectCheats=cheatsBox.Checked;config.SelectSave=saveBox.Checked;
+  config.UseExternalData=installMode.SelectedIndex==1;
  }
  Engine EngineForWork() {CaptureSettings();Json.Write(settingsPath,config);var e=new Engine(config,settingsPath,tools);e.RecoverPending();config=e.Config;e.Progress=(s,p)=>{if(!IsDisposed)BeginInvoke((Action)(()=>{SetMessage(s);if(p>=0){bar.Style=ProgressBarStyle.Continuous;bar.Value=Math.Max(0,Math.Min(100,p));}else bar.Style=ProgressBarStyle.Marquee;}));};e.Cancel=cancel.Token;return e;}
  string V(string s){return s==""?"미설치":s;}
- void RefreshInstalled(){current.Text="본편 "+V(config.BaseVersion)+" · HD "+V(config.HdVersion)+"\nUI 한국어화 "+(config.UiVersion==""&&config.HdVersion=="HD-v40"?"통합 v40":V(config.UiVersion))+"\n치트 "+V(config.CheatsVersion)+"  ·  클리어 세이브 "+V(config.SaveVersion);if(play!=null)play.Enabled=!busy&&File.Exists(config.GameIso);}
+ void RefreshInstalled(){current.Text="본편 "+V(config.BaseVersion)+(config.GameData!=""?" (외부 데이터)":"")+" · HD "+V(config.HdVersion)+"\nUI 한국어화 "+(config.UiVersion==""&&config.HdVersion=="HD-v40"?"통합 v40":V(config.UiVersion))+"\n치트 "+V(config.CheatsVersion)+"  ·  클리어 세이브 "+V(config.SaveVersion);if(play!=null)play.Enabled=!busy&&Engine.HasGame(config);}
  void SetMessage(string s){if(message.Text!=s){message.Text=s;log.AppendText(DateTime.Now.ToString("HH:mm")+"  "+s+Environment.NewLine);}}
- void Busy(bool value){busy=value;check.Enabled=!value;install.Enabled=!value&&release!=null;play.Enabled=!value&&File.Exists(config.GameIso);stop.Enabled=value;graphics.Enabled=!value;uiRemove.Enabled=!value&&release!=null;paths.Enabled=!value;components.Enabled=!value;RefreshPathRequirements();if(!value){bar.Style=ProgressBarStyle.Continuous;RefreshInstalled();}}
+ void Busy(bool value){busy=value;check.Enabled=!value;install.Enabled=!value&&release!=null;play.Enabled=!value&&Engine.HasGame(config);stop.Enabled=value;graphics.Enabled=!value;uiRemove.Enabled=!value&&release!=null;paths.Enabled=!value;components.Enabled=!value;RefreshPathRequirements();if(!value){bar.Style=ProgressBarStyle.Continuous;RefreshInstalled();}}
  async void CheckLatest() {
   if(busy)return;cancel=new CancellationTokenSource();Busy(true);
   try{engine=EngineForWork();SetMessage("GitHub 새 버전 확인 중…");release=await Task.Run(()=>engine.Latest());available.Text="배포 중  "+release.BaseVersion+" + "+release.HdVersion+" + "+release.UiVersion+"\n"+((config.BaseVersion==release.BaseVersion&&(!config.SelectHD||config.HdVersion==release.HdVersion)&&(!config.SelectUI||config.UiVersion==release.UiVersion))?"선택한 설치 버전이 최신입니다.":"선택 항목 설치 / 업데이트 버튼으로 적용");SetMessage("확인 완료. 설치할 항목을 고른 뒤 업데이트 버튼을 눌러 주세요.");}
@@ -163,16 +170,39 @@ public sealed class LauncherForm : Form {
   catch(Exception e){if(engine!=null)config=engine.Config;SetMessage(e.Message);}
   finally{Busy(false);cancel.Dispose();cancel=null;}
  }
+ static string ExternalLaunchMessage(System.Collections.Generic.Dictionary<string,object> status) {
+  string state=Json.S(status,"status"),error=status.ContainsKey("error")?Json.S(status,"error"):"";
+  switch(state) {
+   case "running":return "외부 데이터로 게임을 실행했습니다. 런처 창은 닫아도 됩니다.";
+   case "ready":return "게임 실행 확인이 지연되고 있습니다. 잠시 기다린 뒤 PPSSPP 창과 sessions 상태 기록을 확인하세요.";
+   case "exited":return "PPSSPP가 종료되었습니다.";
+   case "error":case "io-error":throw new Exception(String.IsNullOrEmpty(error)?"외부 패치 데이터를 읽거나 게임을 실행하지 못했습니다.":error);
+   default:throw new Exception("외부 로더 실행 응답 오류: "+state);
+  }
+ }
  async void Launch() {
-  try{if(busy)return;launchSetup=true;RefreshPathRequirements();if(emulator.Text.Trim()==""||memstick.Text.Trim()=="")await FindPaths(false,false,true);CaptureSettings();if(busy||Engine.GameRunning())throw new Exception("이미 PPSSPP가 실행 중입니다.");if(!File.Exists(config.Emulator))throw new Exception("PPSSPP 실행 파일을 지정해 주세요.");if(!File.Exists(config.GameIso))throw new Exception("본편 패치를 먼저 설치해 주세요.");
+  try{if(busy)return;launchSetup=true;RefreshPathRequirements();if(emulator.Text.Trim()==""||memstick.Text.Trim()=="")await FindPaths(false,false,true);CaptureSettings();if(busy||Engine.GameRunning())throw new Exception("이미 PPSSPP가 실행 중입니다.");if(!File.Exists(config.Emulator))throw new Exception("PPSSPP 실행 파일을 지정해 주세요.");if(!Engine.HasGame(config))throw new Exception("본편 패치를 먼저 설치해 주세요.");
    if(config.Memstick=="")throw new Exception("세이브와 HD를 사용할 메모리스틱 폴더를 지정해 주세요.");Directory.CreateDirectory(config.Memstick);Json.Write(settingsPath,config);
-   var launcherEngine=new Engine(config,settingsPath,tools);Process.Start(launcherEngine.GameStartInfo());SetMessage("PPSSPP를 실행했습니다. 예전 상태 저장 대신 게임 내 불러오기를 사용하세요.");
+   var launcherEngine=new Engine(config,settingsPath,tools);
+   if(config.GameData!="") {
+    cancel=new CancellationTokenSource();Busy(true);SetMessage("외부 패치 데이터를 확인하고 게임을 시작하는 중…");ExternalTicket ticket=null;
+    try {
+     launcherEngine.Cancel=cancel.Token;ticket=await Task.Run(()=>launcherEngine.StartExternalSession());config=launcherEngine.Config;string session=ticket.StatusPath;
+     var watch=Stopwatch.StartNew();while(!File.Exists(session)&&watch.Elapsed.TotalSeconds<120){cancel.Token.ThrowIfCancellationRequested();await Task.Delay(200);}
+     if(!File.Exists(session))throw new Exception("외부 로더의 시작 확인이 지연됩니다. 설치 폴더의 sessions 상태 기록을 확인하세요.");
+     var status=Json.Parse(File.ReadAllText(session));if(Json.S(status,"status")=="error")throw new Exception(Json.S(status,"error"));
+     if(Json.S(status,"status")!="ready")throw new Exception("외부 로더 준비 응답 오류");cancel.Token.ThrowIfCancellationRequested();ticket.Commit();stop.Enabled=false;
+     watch.Restart();do{await Task.Delay(100);status=Json.Parse(File.ReadAllText(session));}while(Json.S(status,"status")=="ready"&&watch.Elapsed.TotalSeconds<10);
+     SetMessage(ExternalLaunchMessage(status));
+    }finally{if(ticket!=null)ticket.Dispose();Busy(false);cancel.Dispose();cancel=null;}
+   }else{Process.Start(launcherEngine.GameStartInfo());SetMessage("PPSSPP를 실행했습니다. 예전 상태 저장 대신 게임 내 불러오기를 사용하세요.");}
   }catch(Exception e){SetMessage(e.Message);}
  }
  static void Open(string target){try{Process.Start(new ProcessStartInfo(target){UseShellExecute=true});}catch(Exception e){MessageBox.Show(e.Message);}}
 }
 public static class Program {
  [STAThread] public static void Main(string[] args) {
+  if(args.Length==2&&args[0]=="--external-session"){ExternalSession.Run(Path.GetFullPath(args[1]));return;}
   Application.EnableVisualStyles();Application.SetCompatibleTextRenderingDefault(false);
   string root=AppDomain.CurrentDomain.BaseDirectory;bool preview=args.Length==2&&args[0]=="--preview";
   try{using(var mutex=new Mutex(false,"Local\\FateExtraKoreanLauncher")){if(!preview&&!mutex.WaitOne(0)){MessageBox.Show("런처가 이미 실행 중입니다.");return;}try{
