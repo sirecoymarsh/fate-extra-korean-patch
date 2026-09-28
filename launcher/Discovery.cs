@@ -47,6 +47,16 @@ public sealed class Discovery {
    }
   }catch(IOException){return false;}catch(UnauthorizedAccessException){return false;}catch(ArgumentException){return false;}catch(OverflowException){return false;}
  }
+ // PSP_GAME/<name> 하나를 읽는다(그림 표시용). 실패하면 null. ISO9660 만 보고 아무것도 실행하지 않는다.
+ public static byte[] ReadGameFile(string iso,string name,int maxBytes) {
+  try {
+   if(String.IsNullOrWhiteSpace(iso)||!File.Exists(iso))return null;
+   using(var f=new FileStream(iso,FileMode.Open,FileAccess.Read,FileShare.ReadWrite)) {
+    var volume=ReadAt(f,16*2048,2048);if(volume[0]!=1||Encoding.ASCII.GetString(volume,1,5)!="CD001")return null;var root=new byte[34];Array.Copy(volume,156,root,0,34);
+    var game=Child(f,root,"PSP_GAME");var entry=Child(f,game,name);uint bytes=U32(entry,10);if(bytes<8||bytes>maxBytes)return null;return ReadAt(f,(long)U32(entry,2)*2048,(int)bytes);
+   }
+  }catch(IOException){return null;}catch(UnauthorizedAccessException){return null;}catch(ArgumentException){return null;}catch(OverflowException){return null;}
+ }
  public static bool IsEmulator(string path) {
   try {string name=Path.GetFileName(path);if(!name.Equals("PPSSPPWindows64.exe",StringComparison.OrdinalIgnoreCase)&&!name.Equals("PPSSPPWindows.exe",StringComparison.OrdinalIgnoreCase))return false;string assets=Path.Combine(Path.GetDirectoryName(path),"assets");if(!Local(path)||!Plain(path)||!Directory.Exists(assets)||!Plain(assets))return false;using(var f=File.OpenRead(path)){var dos=ReadAt(f,0,64);if(dos[0]!='M'||dos[1]!='Z')return false;uint pe=U32(dos,60);if(pe<64||pe>1024*1024)return false;return U32(ReadAt(f,pe,4),0)==0x00004550;}}catch{return false;}
  }

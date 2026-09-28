@@ -12,6 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Script.Serialization;
 using System.Text.RegularExpressions;
+using System.Globalization;
 
 namespace FateLauncher {
 public static class Json {
@@ -32,7 +33,7 @@ public sealed class Settings {
  public string BaseVersion="", HdVersion="", HdBaseVersion="", CheatsVersion="", SaveVersion="", GameIso="";
  public string UiVersion="";
  public bool UseExternalData=false;
- public string GameData="",GameDataHash="",GameTargetHash="";
+ public string GameData="",GameDataHash="",GameTargetHash="",InstalledAt="";
  public string CpuDefaultsProfile="";
  public bool SelectBase=true, SelectHD=false, SelectUI=false, SelectCheats=false, SelectSave=false, GraphicsDefaultsApplied=false;
  public static Settings Load(string p) { return File.Exists(p)?Json.Serializer().Deserialize<Settings>(File.ReadAllText(p)):new Settings(); }
@@ -50,6 +51,7 @@ public sealed class ReleaseInfo {
  public string Tag,BaseVersion,HdVersion,BaseRoot,HdRoot,PatchName,TargetHash,HdIniHash; public long TargetBytes;
  public Asset Base,Ui; public Asset[] Hd;
  public string UiVersion="",UiRoot="",UiOriginalHash="",UiKoreanHash="";
+ public DateTime? Published;   // 배포 공개 시각(현지 시간). API 의 published_at, 폴백에서는 파일의 Last-Modified.
  public static ReleaseInfo Read(string json,string tag) {
   var d=Json.Parse(json);
   if(Json.N(d,"schema")!=1 || Json.S(d,"repository")!=Engine.Repository || Json.S(d,"release_tag")!=tag)throw new Exception("이 런처에서 지원하지 않는 업데이트 정보입니다.");
@@ -77,7 +79,7 @@ public sealed class Journal {
  public string PreviousSettings; public bool Committed; public List<Swap> Operations=new List<Swap>();
 }
 public sealed class Engine {
- public const string Version="1.5.0",Repository="sirecoymarsh/fate-extra-korean-patch";
+ public const string Version="1.6.0",Repository="sirecoymarsh/fate-extra-korean-patch";
  public const string ReleaseRoot="https://github.com/"+Repository+"/releases/download/";
  public const string SourceHash="60399D610CBCDA96601374A2E621A22BB58505C403C6FA4221EEC5E87235667B";
  public const long SourceSize=1280933888;
@@ -107,7 +109,22 @@ public sealed class Engine {
  void Say(string s,int p=-1) { if(Progress!=null)Progress(s,p); }
  void Check() { Cancel.ThrowIfCancellationRequested(); }
  static HttpClient Client() { ServicePointManager.SecurityProtocol=SecurityProtocolType.Tls12;var c=new HttpClient();c.Timeout=Timeout.InfiniteTimeSpan;c.DefaultRequestHeaders.UserAgent.ParseAdd("FateExtraKoreanLauncher/"+Version);return c; }
+ // 최신 배포 정보. 1) GitHub API 로 최신 릴리스와 첨부 목록을 읽고 2) 그 릴리스의 launcher-update.json 을 받는다.
+ // API 가 막히면(시간당 60회 한도 403, 방화벽) releases/latest/download 고정 주소로 launcher-update.json 만 받는다.
  public ReleaseInfo Latest() {
+  try{return LatestViaApi();}
+  catch(Exception e){if(Cancel.IsCancellationRequested||!(e is HttpRequestException||e is TaskCanceledException||e is OperationCanceledException||e is IOException))throw;return LatestDirect();}
+ }
+ static string ReadSmall(HttpClient c,string url,CancellationToken token) {DateTime? ignored;return ReadSmall(c,url,token,out ignored);}
+ static string ReadSmall(HttpClient c,string url,CancellationToken token,out DateTime? modified) {
+  modified=null;using(var res=c.GetAsync(url,HttpCompletionOption.ResponseHeadersRead,token).GetAwaiter().GetResult()) {
+   res.EnsureSuccessStatusCode();if(res.Content.Headers.LastModified.HasValue)modified=res.Content.Headers.LastModified.Value.LocalDateTime;using(var stream=res.Content.ReadAsStreamAsync().GetAwaiter().GetResult())using(var ms=new MemoryStream()) {
+    var buf=new byte[8192];int n;while((n=stream.ReadAsync(buf,0,buf.Length,token).GetAwaiter().GetResult())>0){if(ms.Length+n>2*1024*1024)throw new Exception("업데이트 정보 크기 초과");ms.Write(buf,0,n);}
+    return Encoding.UTF8.GetString(ms.ToArray()).TrimStart('\uFEFF');
+   }
+  }
+ }
+ ReleaseInfo LatestViaApi() {
   using(var c=Client())using(var timeout=CancellationTokenSource.CreateLinkedTokenSource(Cancel)) {
    c.Timeout=TimeSpan.FromSeconds(35);
    timeout.CancelAfter(TimeSpan.FromSeconds(35));
@@ -117,15 +134,18 @@ public sealed class Engine {
    var assets=Json.A(release,"assets").Select(Json.Map).ToArray();var meta=assets.SingleOrDefault(a=>Json.S(a,"name")=="launcher-update.json");
    if(meta==null)throw new Exception("이 배포본에는 런처 업데이트 정보가 없습니다. 배포 페이지를 확인해 주세요.");
    if(Json.N(meta,"size")>2*1024*1024)throw new Exception("업데이트 정보 크기 오류");
-   string url=ReleaseRoot+Uri.EscapeDataString(tag)+"/launcher-update.json";
-   using(var res=c.GetAsync(url,HttpCompletionOption.ResponseHeadersRead,timeout.Token).GetAwaiter().GetResult()) {
-    res.EnsureSuccessStatusCode();using(var stream=res.Content.ReadAsStreamAsync().GetAwaiter().GetResult())using(var ms=new MemoryStream()) {
-     var buf=new byte[8192];int n;while((n=stream.ReadAsync(buf,0,buf.Length,timeout.Token).GetAwaiter().GetResult())>0){if(ms.Length+n>2*1024*1024)throw new Exception("업데이트 정보 크기 초과");ms.Write(buf,0,n);}
-     var r=ReleaseInfo.Read(Encoding.UTF8.GetString(ms.ToArray()).TrimStart('\uFEFF'),tag);
-     foreach(var a in new[]{r.Base}.Concat(r.Hd).Concat(r.Ui==null?new Asset[0]:new[]{r.Ui})) { var remote=assets.SingleOrDefault(x=>Json.S(x,"name")==a.Name);if(remote==null||Json.N(remote,"size")!=a.Size)throw new Exception("릴리스 파일이 아직 준비되지 않았습니다: "+a.Name); }
-     return r;
-    }
-   }
+   var r=ReleaseInfo.Read(ReadSmall(c,ReleaseRoot+Uri.EscapeDataString(tag)+"/launcher-update.json",timeout.Token),tag);
+   DateTime published;if(release.ContainsKey("published_at")&&DateTime.TryParse(Convert.ToString(release["published_at"]),CultureInfo.InvariantCulture,DateTimeStyles.AdjustToUniversal|DateTimeStyles.AssumeUniversal,out published))r.Published=published.ToLocalTime();
+   foreach(var a in new[]{r.Base}.Concat(r.Hd).Concat(r.Ui==null?new Asset[0]:new[]{r.Ui})) { var remote=assets.SingleOrDefault(x=>Json.S(x,"name")==a.Name);if(remote==null||Json.N(remote,"size")!=a.Size)throw new Exception("릴리스 파일이 아직 준비되지 않았습니다: "+a.Name); }
+   return r;
+  }
+ }
+ ReleaseInfo LatestDirect() {
+  using(var c=Client())using(var timeout=CancellationTokenSource.CreateLinkedTokenSource(Cancel)) {
+   c.Timeout=TimeSpan.FromSeconds(35);timeout.CancelAfter(TimeSpan.FromSeconds(35));
+   DateTime? modified;string text=ReadSmall(c,"https://github.com/"+Repository+"/releases/latest/download/launcher-update.json",timeout.Token,out modified);
+   string tag=Json.S(Json.Parse(text),"release_tag");SafeRelative(tag);if(tag.IndexOf('/')>=0||tag.IndexOf((char)92)>=0)throw new Exception("잘못된 버전 태그");
+   var r=ReleaseInfo.Read(text,tag);r.Published=modified;return r;
   }
  }
  public string Download(Asset a,string tag) {
@@ -152,6 +172,15 @@ public sealed class Engine {
  public static bool GameRunning() { return Process.GetProcessesByName("PPSSPPWindows64").Length>0||Process.GetProcessesByName("PPSSPPWindows").Length>0; }
  public static string PspRoot(string memory) {string full=Path.GetFullPath(memory).TrimEnd(Path.DirectorySeparatorChar,Path.AltDirectorySeparatorChar);return String.Equals(Path.GetFileName(full),"PSP",StringComparison.OrdinalIgnoreCase)?full:Path.Combine(full,"PSP");}
  public static bool HasGame(Settings config){return File.Exists(config.GameData!=""?config.GameData:config.GameIso);}
+ // 메모리스틱 = PSP 폴더를 품은 폴더. 사용자가 안쪽 PSP 폴더(SYSTEM·SAVEDATA·TEXTURES 가 바로 보이는 곳)를 고르면 부모로 바꾼다.
+ // 폴더 이름만 PSP 인 진짜 메모리스틱(안에 PSP 폴더가 또 있음)은 그대로 둔다. PPSSPP 는 installed.txt 의 경로 밑에 항상 PSP 를 붙인다.
+ public static string MemstickRoot(string memory) {
+  if(String.IsNullOrWhiteSpace(memory))return "";string full;try{full=Path.GetFullPath(memory).TrimEnd(Path.DirectorySeparatorChar,Path.AltDirectorySeparatorChar);}catch(ArgumentException){return memory;}catch(NotSupportedException){return memory;}
+  if(!String.Equals(Path.GetFileName(full),"PSP",StringComparison.OrdinalIgnoreCase))return full;string parent=Path.GetDirectoryName(full);
+  if(String.IsNullOrEmpty(parent)||Directory.Exists(Path.Combine(full,"PSP")))return full;
+  bool inner=false;foreach(string child in new[]{"SYSTEM","SAVEDATA","TEXTURES","GAME","Cheats"})if(Directory.Exists(Path.Combine(full,child)))inner=true;
+  return inner?parent:full;
+ }
  public ProcessStartInfo GameStartInfo(string bootTarget=null) {
   if(RunningCheck())throw new Exception("이미 PPSSPP가 실행 중입니다.");
   RecoverPending();
@@ -172,7 +201,7 @@ public sealed class Engine {
    finally {if(Directory.Exists(stage))DeleteTree(stage,Path.GetDirectoryName(runtime));}
   }
   if(!File.Exists(exe)||!Directory.Exists(Path.Combine(runtime,"assets")))throw new Exception("런처 내부 PPSSPP 복사본이 불완전합니다. 본편 폴더의 emulator 폴더를 옮긴 뒤 다시 실행해 주세요.");
-  File.WriteAllText(Path.Combine(runtime,"installed.txt"),Path.GetFullPath(Config.Memstick),new UTF8Encoding(false));
+  File.WriteAllText(Path.Combine(runtime,"installed.txt"),Path.GetFullPath(MemstickRoot(Config.Memstick)),new UTF8Encoding(false));
   PreparePlaybackDefaults();
   return new ProcessStartInfo(exe,Quote(bootTarget??Config.GameIso)){UseShellExecute=false,WorkingDirectory=runtime};
  }
@@ -261,6 +290,22 @@ public sealed class Engine {
    finally{foreach(var op in j.Operations)if(Exists(op.Staged))DeleteTree(op.Staged,Path.GetDirectoryName(op.Staged));DeleteTree(work,Path.Combine(Root,"staging"));}
   }
  }
+ // 다운로드 전에 여유 공간을 본다. 최고점 = 아직 안 받은 압축 + 푼 것 + 스테이지 사본 + 결과물. 이미 받아 검증된 압축은 빼고 센다.
+ void EnsureSpace(ReleaseInfo r,bool installBase,bool installHD,bool installUI) {
+  string downloads=Path.Combine(Root,"downloads",r.Tag);
+  Func<Asset,long> pending=a=>{try{string p=Path.Combine(downloads,a.Name);return File.Exists(p)&&new FileInfo(p).Length==a.Size?0:a.Size;}catch{return a.Size;}};
+  long margin=256L*1024*1024,need=margin,hd=r.Hd.Sum(a=>a.Size);
+  if(installBase)need+=pending(r.Base)+r.Base.Size+(Config.UseExternalData?r.TargetBytes*3/2:2*r.TargetBytes);
+  if(installHD)need+=r.Hd.Sum(pending)+hd;
+  if(installUI&&r.Ui!=null)need+=pending(r.Ui)+2*r.Ui.Size;
+  string rootDrive=Path.GetPathRoot(Root),memoryDrive=Config.Memstick==""?"":Path.GetPathRoot(Path.GetFullPath(Config.Memstick));
+  bool sameDrive=String.Equals(rootDrive,memoryDrive,StringComparison.OrdinalIgnoreCase);
+  if(installHD&&sameDrive)need+=hd;
+  long free=FreeSpace(Root);if(free>=0&&free<need)throw new Exception("설치 폴더가 있는 "+rootDrive+" 드라이브의 여유 공간이 부족합니다. 약 "+GB(need)+" GB 필요, 남은 공간 "+GB(free)+" GB. 공간을 비우거나 고급에서 설치 폴더를 다른 드라이브로 바꿔 주세요.");
+  if(installHD&&memoryDrive!=""&&!sameDrive){long mfree=FreeSpace(Config.Memstick),mneed=hd+margin;if(mfree>=0&&mfree<mneed)throw new Exception("메모리스틱이 있는 "+memoryDrive+" 드라이브의 여유 공간이 부족합니다. HD 팩에 약 "+GB(mneed)+" GB 필요, 남은 공간 "+GB(mfree)+" GB.");}
+ }
+ static long FreeSpace(string path){try{return new DriveInfo(Path.GetPathRoot(Path.GetFullPath(path))).AvailableFreeSpace;}catch{return -1;}}
+ static string GB(long bytes){return (bytes/1073741824.0).ToString("0.0");}
  public void Install(ReleaseInfo r,bool installBase,bool installHD,bool installCheats,bool installSave,bool installUI=false,bool removeUI=false) {
   RecoverPending();
   Check();
@@ -276,6 +321,7 @@ public sealed class Engine {
   bool changeUI=useUI||removeUI;
   if(changeUI&&r.Ui==null)throw new Exception("이 배포에는 선택 UI 한국어화가 없습니다.");
   if(installBase){Say("원본 ISO 확인");if(Config.SourceIso=="")throw new Exception("보유한 일본판 원본 ISO를 지정해 주세요.");Verify(Config.SourceIso,SourceSize,SourceHash);}
+  EnsureSpace(r,installBase,installHD,changeUI);
   using(var gate=new FileStream(Path.Combine(Root,"install.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)) {
    Recover();string id=DateTime.UtcNow.ToString("yyyyMMddHHmmss")+"-"+Guid.NewGuid().ToString("N").Substring(0,8);string work=Path.Combine(Root,"staging",id);Directory.CreateDirectory(work);
    var j=new Journal{PreviousSettings=Json.Serializer().Serialize(Config)};bool journalWritten=false;
@@ -330,6 +376,7 @@ public sealed class Engine {
     if(changeUI){Config.UiVersion=useUI?r.UiVersion:"";Config.HdVersion=r.HdVersion;Config.HdBaseVersion=r.BaseVersion;}
     if(installHD||changeUI||installCheats){Config.GraphicsDefaultsApplied=true;Config.CpuDefaultsProfile=psp;}
     if(installCheats)Config.CheatsVersion=r.BaseVersion;if(installSave)Config.SaveVersion=r.BaseVersion;
+    Config.InstalledAt=DateTime.Now.ToString("yyyy-MM-dd");
     Json.Write(ConfigPath,Config);j.Committed=true;Json.Write(JournalPath,j);File.Delete(JournalPath);Say("선택한 항목 설치 완료",100);
    } catch {
     if(journalWritten){Rollback(j);Config=Json.Serializer().Deserialize<Settings>(j.PreviousSettings);Json.Write(ConfigPath,Config);if(File.Exists(JournalPath))File.Delete(JournalPath);}throw;

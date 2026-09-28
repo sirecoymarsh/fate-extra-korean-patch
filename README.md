@@ -2,15 +2,17 @@
 
 PSP 일본판 Fate/EXTRA(NPJH50247)용 비공식 한국어 패치입니다.
 
-**[최신 배포와 다운로드](https://github.com/sirecoymarsh/fate-extra-korean-patch/releases/tag/v8h-hd-v54-ui-v4)** — 본편 v8h · HD v54 · 선택 UI v4 · 런처1.5.0
+**[최신 배포와 다운로드](https://github.com/sirecoymarsh/fate-extra-korean-patch/releases/tag/v8h-hd-v54-ui-v4)** — 본편 v8h · HD v54 · 선택 UI v4 · 런처 1.6.0
+
+**[런처 내려받기](https://github.com/sirecoymarsh/fate-extra-korean-patch/releases/latest/download/Fate-Extra-Korean-Launcher.zip)** — 받을 파일은 이것 하나입니다. 배포 페이지의 나머지 파일은 런처 없이 수동 설치할 때만 필요합니다.
 
 ## 설치
 
-런처 1.5.0은 **ISO 파일 생성**과 **외부 데이터 로딩 · ISO 생성 안 함**을 선택할 수 있습니다. 외부 방식은 실행할 때도 일본판 원본 ISO가 필요하며 게임은 런처에서 실행합니다. 설치 방식 선택만으로 기존 설치가 전환되지는 않으므로 선택 후 본편 설치를 실행하세요. [런처 1.5.0 릴리즈](https://github.com/sirecoymarsh/fate-extra-korean-patch/releases/tag/launcher-v1.5.0)
+런처 1.6.0은 켜면 일본판 원본 ISO·PPSSPP·메모리스틱을 스스로 찾고, 「전체 설치」 또는 「본편만」을 고른 뒤 「설치」 한 번으로 끝납니다. 설치 방식은 **한국어 ISO 파일 만들기**가 기본이고, **외부 데이터 로딩 · ISO 생성 안 함**은 「고급」에 있습니다. 외부 방식은 실행할 때도 원본 ISO가 필요하며 게임은 런처에서 실행합니다. 방식을 바꾼 뒤에는 설치를 다시 눌러야 적용됩니다. [런처 1.6.0 릴리즈](https://github.com/sirecoymarsh/fate-extra-korean-patch/releases/tag/launcher-v1.6.0)
 
 16MB 이상 파일은 **4개 구간을 동시에 다운로드**합니다. 각 구간을 이어받고 합친 파일을 검증하며, 서버가 구간 전송을 지원하지 않으면 일반 다운로드로 전환합니다.
 
-런처1.5.0 ZIP을 새 폴더에 풀고 실행합니다. 보유한 일본판 원본 ISO를 지정하고 설치할 항목을 선택한 뒤 **설치 / 업데이트**를 누르세요. HD/UI/치트/클리어 세이브는 PPSSPP 메모리스틱 폴더가 필요합니다.
+런처 ZIP을 새 폴더에 풀고 실행합니다. 처음 실행할 때 「Windows의 PC 보호」 창이 뜨면 「추가 정보 → 실행」을 누르세요. ZIP 파일의 속성에서 「차단 해제」를 체크하고 풀면 이 창이 뜨지 않습니다. 찾아 놓은 경로를 확인하고 **한국어 패치 설치**를 누르면 됩니다. HD/UI/치트/클리어 세이브는 PPSSPP 메모리스틱 폴더가 필요합니다.
 
 | 선택 | 화면 |
 | --- | --- |
@@ -24,7 +26,7 @@ PSP 일본판 Fate/EXTRA(NPJH50247)용 비공식 한국어 패치입니다.
 
 - 본편 v8h: 문자열 재배치 과정에서 손상된 아처 2곳·세이버 13곳의 연출 명령을 원본으로 복원했습니다. 기존 v8g의 번역·글꼴·이름·매트릭스 수정은 유지합니다.
 - HD v54·선택 UI v4: v8h 호환성 정보 갱신이며 그림과 매핑은 HD v53·UI v3과 같습니다.
-- 런처 1.5.0: ISO 생성과 외부 데이터 로딩을 선택할 수 있습니다. 외부 방식은 실행 때도 원본 ISO가 필요합니다.
+- 런처 1.6.0: 첫 화면을 다시 짰습니다. 켜면 경로를 찾고, 전체 설치 또는 본편만을 고른 뒤 설치 한 번입니다. 외부 데이터 로딩은 고급에 있습니다.
 
 이전에 멈추던 아처 사례 1건과 새 부팅 세션의 전투 진입·표시는 사용자가 정상 진행을 확인했습니다. 모든 아처·세이버 장면을 개별 재현한 검증은 아닙니다.
 
@@ -38,7 +40,7 @@ HD/UI 설치 시 Fate/EXTRA 전용 설정에 렌더링 8배, MSAA 4배, 수직�
 
 ## 파일과 지원 원본
 
-- `Fate-Extra-Korean-Launcher-v1.5.0.zip`
+- `Fate-Extra-Korean-Launcher-v1.6.0.zip` — 고정 이름 사본 `Fate-Extra-Korean-Launcher.zip`과 같은 파일
 - `Fate-Extra-Korean-Base-v8h.zip`
 - `Fate-Extra-Korean-HD-v54.z01` + `.zip` — 같은 폴더에 두고 ZIP에서 전체 압축 해제
 - `Fate-Extra-Korean-UI-v4.zip` — 런처로 적용/해제

@@ -1,0 +1,58 @@
+{
+  "version": "1.6.0",
+  "scope": "Launcher-only update. The current public game remains v8h / HD-v54 / UI-v4. No game patch, image, save, emulator or game art is included.",
+  "package": {
+    "name": "Fate-Extra-Korean-Launcher-v1.6.0.zip",
+    "bytes": 849623,
+    "sha256": "5E0FC830F59E271F278D00B1E7D4F57F140188BAD44CBC747F2E56F021268031"
+  },
+  "exe_sha256": "AC3221FBB181EF1A8C1438DF7006229B28F2E17C5A7575EE498756B2BF337132",
+  "source_sha256": {
+    "Core.cs": "3A959A793FE46F2B5D2FB94027F28752723269692FB5DEA172DA4617335B57F5",
+    "Launcher.cs": "AA90F2ECEFEAA095CFBC8FE75195AB07AA5D9D98A23B357ED9E18BF5A29836C5",
+    "ExternalData.cs": "172BCACC9C6883C9013A44E9B221DE882F689B4800612991A553211CDCB87D0F",
+    "Discovery.cs": "EA2AFFF21F35640194C74BC6E06D696A6635325C0E9D89BEC891681AD666CA70",
+    "ParallelDownload.cs": "6A4DD05618161E57B637158957CB97E8E06D224A4D1CA80C1187A9D78F491082",
+    "UiPack.cs": "568B9FBDD8AC5A9BB30F590135A021213BEBF91FE5968DFF3B62417587FA40E8",
+    "AssemblyInfo.cs": "206191CF71913942D5881427D322BC4C865FAB0E52FBCF11C52E3CEB7D10212A",
+    "app.manifest": "3A37CBDE7EA6391E4EA093AFCFC5C2323476AB5E4BFCAEC97548469A0CFA2DC8",
+    "build.ps1": "E140ABB770C52F5CC548E606D0F56078D6621FF81AF19565582D54645FC2EC0C"
+  },
+  "unit_tests": {
+    "harness": "Tests.cs",
+    "mode": "unit",
+    "passed": 26,
+    "failed": 0,
+    "fixture": "launcher-update.json for v8e-hd-v39"
+  },
+  "gui_checks": {
+    "method": "real execution in a clean folder without settings, PrintWindow captures",
+    "states": [
+      "first run with discovery and latest-release check",
+      "advanced panel expanded",
+      "base-only plan",
+      "nothing-found state (--preview empty)",
+      "download in progress (--preview 67)"
+    ]
+  },
+  "real_installation": {
+    "date": "2026-09-29",
+    "core": "same Core.cs/ExternalData.cs as this release except the Published/InstalledAt fields",
+    "plan": "full (base + HD + Korean UI)",
+    "iso_sha256": "3F728BC2536A0D4E42B3EA440C9F7216A8D5146188644DCD5942B005C720C3F9",
+    "textures_ini_sha256": "219C423B2CEE14970A81E8F1653DC919748379D82F7009C75AF6108900064337",
+    "verified_pngs": 26712,
+    "per_game_ini_created": true,
+    "ppsspp_launched": true
+  },
+  "not_verified": [
+    "free-space rejection on a nearly full drive",
+    "external-mode helper wait on a slow disk",
+    "PSP hardware"
+  ],
+  "harness_updates_needed": [
+    "DiscoveryTests: ambiguous candidates are now auto-filled with the first one",
+    "SelectionGuiTests: selecting HD/UI now triggers device discovery"
+  ],
+  "translator_model": "n/a (no translated game text in this release)"
+}

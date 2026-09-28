@@ -129,10 +129,12 @@ public sealed class ExternalServer : IDisposable {
 public sealed class ExternalTicket : IDisposable {
  public readonly string RequestPath,StatusPath;readonly Process helper;bool committed;
  public ExternalTicket(string request,Process process){RequestPath=request;StatusPath=request+".status.json";helper=process;}
+ public bool HelperAlive{get{try{return !helper.HasExited;}catch{return false;}}}
  public void Commit(){File.WriteAllText(RequestPath+".go","");committed=true;}
  public void Dispose(){if(!committed){File.WriteAllText(RequestPath+".cancel","");try{if(!helper.HasExited)helper.Kill();}catch{}}helper.Dispose();}
 }
 public static class ExternalSession {
+ static void Note(string path,object o){try{Json.Write(path,o);}catch{}}
  public static void Run(string requestPath) {
   string status=requestPath+".status.json";try {
    Settings c=Settings.Load(requestPath);if(c.GameData=="")throw new Exception("외부 로딩 설정 오류");
@@ -148,9 +150,10 @@ public static class ExternalSession {
      if(File.Exists(requestPath+".cancel"))throw new OperationCanceledException("외부 실행 준비를 취소했습니다.");
      if(Engine.GameRunning())throw new Exception("이미 PPSSPP가 실행 중입니다.");start.Arguments=Engine.Quote(server.Url);
      using(var process=Process.Start(start)) {
-      Json.Write(status,new{status="running",pid=process.Id,helper_pid=Process.GetCurrentProcess().Id,url=server.Url,target_sha256=image.Info.TargetHash});
-      bool reported=false;while(!process.WaitForExit(500)){if(server.ReadError!=null&&!reported){reported=true;Json.Write(status,new{status="io-error",pid=process.Id,error=server.ReadError});}}
-      Json.Write(status,new{status=server.ReadError==null?"exited":"io-error",error=server.ReadError,pid=process.Id,helper_pid=Process.GetCurrentProcess().Id,requests=server.Requests,bytes=server.Bytes,target_sha256=image.Info.TargetHash});
+      // 게임이 뜬 뒤의 상태 기록은 부가 정보다. 기록이 실패해도(런처가 같은 파일을 읽는 순간의 공유 위반 등) 디스크 서버는 게임이 끝날 때까지 산다.
+      Note(status,new{status="running",pid=process.Id,helper_pid=Process.GetCurrentProcess().Id,url=server.Url,target_sha256=image.Info.TargetHash});
+      bool reported=false;while(!process.WaitForExit(500)){if(server.ReadError!=null&&!reported){reported=true;Note(status,new{status="io-error",pid=process.Id,error=server.ReadError});}}
+      Note(status,new{status=server.ReadError==null?"exited":"io-error",error=server.ReadError,pid=process.Id,helper_pid=Process.GetCurrentProcess().Id,requests=server.Requests,bytes=server.Bytes,target_sha256=image.Info.TargetHash});
      }
     }
    }
