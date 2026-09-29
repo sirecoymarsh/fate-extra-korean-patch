@@ -1,0 +1,39 @@
+{
+ "date": "2026-09-29",
+ "package": {
+  "name": "Fate-Extra-Korean-UI-only-v4.zip",
+  "bytes": 1552171,
+  "sha256": "5DD995A43DD2E79AA538C0E97A2DF6756609115F6D08840B366F90010CA01D67"
+ },
+ "ini_sha256": "7B1F5DA94A36D1B473A8B95BBAEE9080CFE38011CCBE8383E7060A473F39E950",
+ "ini_lines": 757,
+ "entries": 750,
+ "assets": 283,
+ "derivation": "[options] of korean-textures.ini verbatim (4 lines) + blank line + [hashes] + the 750 entries where korean-textures.ini differs from original-textures.ini, in korean-ini order, as \"key = value\"; CRLF line ends, UTF-8 without BOM, trailing CRLF",
+ "static_checks": [
+  "every ini reference resolves to a file in the package",
+  "entry set == ui-manifest mapping_changes keys and values == mapping_changes[k].korean",
+  "each PNG byte count and sha256 equals ui-manifest files entry",
+  "zip testzip clean"
+ ],
+ "runtime": {
+  "emulator": "PPSSPP v1.20.4 separate portable copies under work/ui-standalone-20260929 (ppsspp-uionly port 14941 with only this pack; ppsspp-control port 14951 with no pack)",
+  "iso": "Fate-Extra-Korean-v8h.iso (launcher 1.6.0 real install output)",
+  "ui_only_observed": [
+   "title: 시작 버튼을 누르세요 + Korean four-line caption (shots/01-title.png)",
+   "field HUD: 남은 일수 / 저녁 (shots/02-after-start.png)",
+   "arena HUD: 캐스터 / 마스터 (shots/05-field-menu2.png)",
+   "battle UI 공격/방어/격파/□ 기술 in Korean — confirmed by the user on screen (\"되네\")"
+  ],
+  "control_observed": [
+   "title: PRESS START + English caption (shots/control-01-title.png)"
+  ],
+  "log": "at TEXREPLACE log level 4 the trimmed ini causes one \"Texture replacement file <hash>.png not found\" line per texture hash that has no entry (679 in the first 25 s); cached per hash, invisible at the default level, no rendering effect"
+ },
+ "not_verified": [
+  "Android PPSSPP",
+  "PPSSPP versions other than 1.20.4",
+  "every one of the 750 entries on screen (mechanism is per-hash lookup, identical to the HD+UI path)"
+ ],
+ "translator_model": "n/a (repackaging of UI-v4 textures; no new translated text)"
+}
