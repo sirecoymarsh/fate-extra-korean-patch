@@ -2,7 +2,7 @@
 
 PSP 일본판 Fate/EXTRA(NPJH50247)용 비공식 한국어 패치입니다.
 
-**[최신 배포와 다운로드](https://github.com/sirecoymarsh/fate-extra-korean-patch/releases/tag/v8h-hd-v54-ui-v4)** — 본편 v8h · HD v54 · 선택 UI v4 · 런처 1.6.0
+**[최신 배포와 다운로드](https://github.com/sirecoymarsh/fate-extra-korean-patch/releases/tag/v8i-hd-v55-ui-v5)** — 본편 v8i · HD v55 · 선택 UI v5 · 런처 1.6.0
 
 **[런처 내려받기](https://github.com/sirecoymarsh/fate-extra-korean-patch/releases/latest/download/Fate-Extra-Korean-Launcher.zip)** — 받을 파일은 이것 하나입니다. 배포 페이지의 나머지 파일은 런처 없이 수동 설치할 때만 필요합니다.
 
@@ -24,12 +24,12 @@ PSP 일본판 Fate/EXTRA(NPJH50247)용 비공식 한국어 패치입니다.
 
 ## 이번 배포
 
-- 본편 v8h: 문자열 재배치 과정에서 손상된 아처 2곳·세이버 13곳의 연출 명령을 원본으로 복원했습니다. 기존 v8g의 번역·글꼴·이름·매트릭스 수정은 유지합니다.
-- HD v54·선택 UI v4: v8h 호환성 정보 갱신이며 그림과 매핑은 HD v53·UI v3과 같습니다.
-- 런처 1.6.0: 첫 화면을 다시 짰습니다. 켜면 경로를 찾고, 전체 설치 또는 본편만을 고른 뒤 설치 한 번입니다. 외부 데이터 로딩은 고급에 있습니다.
-- UI 단독 팩(2026-09-29 추가): HD 고화질 팩 없이 UI 한국어화만 넣는 `Fate-Extra-Korean-UI-only-v4.zip`을 배포 페이지에 추가했습니다. 수동·안드로이드용이며 그림은 UI v4와 같습니다.
+- 본편 v8i: 3회전 종료 후 시청각실에서 영사기(데모 전투)를 본 뒤 서번트 대사 직전에 「Now Loading」이 멈추던 문제(세이버 보고, 아처도 같은 경계)를 수정했습니다. 한국어판의 상주 데이터가 일본판보다 커져 파일 로더 힙이 모자라던 것이 원인이라, 로더 힙과 C 라이브러리 힙을 512KB 늘렸습니다(EBOOT 4바이트). 기존 v8h의 번역·글꼴·연출 명령 복원은 유지합니다.
+- HD v55·선택 UI v5: v8i 호환성 정보 갱신이며 그림과 매핑은 HD v54·UI v4와 같습니다.
+- 런처 1.6.0: 켜면 경로를 찾고, 전체 설치 또는 본편만을 고른 뒤 설치 한 번입니다. 외부 데이터 로딩은 고급에 있습니다.
+- UI 단독 팩: HD 고화질 팩 없이 UI 한국어화만 넣는 `Fate-Extra-Korean-UI-only-v4.zip`은 그대로입니다(그림은 UI v5와 같음). 수동·안드로이드용입니다.
 
-이전에 멈추던 아처 사례 1건과 새 부팅 세션의 전투 진입·표시는 사용자가 정상 진행을 확인했습니다. 모든 아처·세이버 장면을 개별 재현한 검증은 아닙니다.
+공개판 v8h에서 같은 장면의 멈춤을 에뮬레이터로 재현했고, v8i에서는 세이버·아처 모두 그 장면을 지나 다음 대사로 진행했습니다(자동 진행 시험). 모든 루트와 장면을 다시 플레이한 검증은 아닙니다. 세이브 데이터는 그대로 이어서 쓸 수 있고, 예전 PPSSPP 상태 저장은 쓰지 마세요.
 
 ## PPSSPP 설정과 저장
 
@@ -42,12 +42,12 @@ HD/UI 설치 시 Fate/EXTRA 전용 설정에 렌더링 8배, MSAA 4배, 수직�
 ## 파일과 지원 원본
 
 - `Fate-Extra-Korean-Launcher-v1.6.0.zip` — 고정 이름 사본 `Fate-Extra-Korean-Launcher.zip`과 같은 파일
-- `Fate-Extra-Korean-Base-v8h.zip`
-- `Fate-Extra-Korean-HD-v54.z01` + `.zip` — 같은 폴더에 두고 ZIP에서 전체 압축 해제
-- `Fate-Extra-Korean-UI-v4.zip` — 런처로 적용/해제
-- `Fate-Extra-Korean-UI-only-v4.zip` — HD 고화질 팩 없이 UI 한국어화만 쓰는 수동 설치용 팩(안드로이드 포함, 1.5 MB). 그림은 UI v4와 같습니다.
+- `Fate-Extra-Korean-Base-v8i.zip`
+- `Fate-Extra-Korean-HD-v55.z01` + `.zip` — 같은 폴더에 두고 ZIP에서 전체 압축 해제
+- `Fate-Extra-Korean-UI-v5.zip` — 런처로 적용/해제
+- `Fate-Extra-Korean-UI-only-v4.zip` — HD 고화질 팩 없이 UI 한국어화만 쓰는 수동 설치용 팩(안드로이드 포함, 1.5 MB). 그림은 UI v5와 같습니다.
 
-수동 본편 설치는 기본 팩의 `Apply-Patch.cmd`를 실행해 일본판 원본 ISO를 선택합니다. 원본을 보존하며 같은 폴더에 `Fate-Extra-Korean-v8h.iso`를 생성합니다. 수동 HD 설치는 기존 폴더를 백업하고 압축을 푼 `NPJH50247` 폴더를 메모리스틱의 `PSP/TEXTURES`에 넣은 뒤 PPSSPP의 텍스처 교체를 켭니다. 수동 UI 설치는 UI ZIP의 `files/KoreanHD`를 해당 폴더에 합치고 `korean-textures.ini`를 `textures.ini`로 이름을 바꿔 덮어씁니다.
+수동 본편 설치는 기본 팩의 `Apply-Patch.cmd`를 실행해 일본판 원본 ISO를 선택합니다. 원본을 보존하며 같은 폴더에 `Fate-Extra-Korean-v8i.iso`를 생성합니다. 수동 HD 설치는 기존 폴더를 백업하고 압축을 푼 `NPJH50247` 폴더를 메모리스틱의 `PSP/TEXTURES`에 넣은 뒤 PPSSPP의 텍스처 교체를 켭니다. 수동 UI 설치는 UI ZIP의 `files/KoreanHD`를 해당 폴더에 합치고 `korean-textures.ini`를 `textures.ini`로 이름을 바꿔 덮어씁니다.
 
 **HD 없이 UI 한국어화만** 쓰려면 `Fate-Extra-Korean-UI-only-v4.zip` 안의 `NPJH50247` 폴더를 메모리스틱의 `PSP/TEXTURES`에 넣고 PPSSPP의 텍스처 교체를 켭니다. 안드로이드 PPSSPP도 같습니다(설정 → 시스템 → 메모리스틱 폴더). 이 팩은 HD 팩과 같이 쓰지 않으며, 나중에 런처로 HD를 설치하려면 그 `NPJH50247` 폴더를 먼저 지우세요. 되돌리려면 폴더를 지우면 됩니다.
 

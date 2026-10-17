@@ -1,0 +1,103 @@
+{
+  "status": "PASS-local-package-and-application",
+  "target": {
+    "bytes": 1979887616,
+    "sha256": "A144F8ABF4951FB8FAF4D2E6C8B4DE034C85B27E287E9AF8ADB67B20FB3FF0CE"
+  },
+  "source": {
+    "bytes": 1280933888,
+    "sha256": "60399D610CBCDA96601374A2E621A22BB58505C403C6FA4221EEC5E87235667B"
+  },
+  "base": "v8h",
+  "changed_bytes_total": 34,
+  "v8h_opcode_bytes": 30,
+  "v8i_heap_bytes": 4,
+  "unexplained_changes": 0,
+  "cause": "file loader heap (heap 3) exhausted in the round-3-end projector scene; PRELOAD +229,664 B resident vs JP",
+  "fix": "heap 3 0x01240000->0x012C0000 and sce_newlib_heap_kb_size 19968->20480 in both EBOOT copies",
+  "runtime": {
+    "date": "2026-10-17",
+    "observer": "Claude Opus session (isolated PPSSPP 1.20.4, port 14931)",
+    "v8h_reproduced_hang": true,
+    "fixed_saber_passed": true,
+    "fixed_archer_passed": true,
+    "caster": "passes on v8h already",
+    "evidence": "P:\\AI\\Codex\\projects\\fate-extra-psp-korean\\work\\loading-hang-20261017\\README-ko.md",
+    "user_hand_ab": false
+  },
+  "local_installation": {
+    "status": "PASS",
+    "mode": "local",
+    "release": "v8i-hd-v55-ui-v5",
+    "launcher_assembly_sha256": "8809B2AD14F60BBDCA8ADF3F27E37A9ECE2C62326B280B7CE603C5A7DA2EAFF5",
+    "seconds": 940.9015664,
+    "base_iso_sha256": "A144F8ABF4951FB8FAF4D2E6C8B4DE034C85B27E287E9AF8ADB67B20FB3FF0CE",
+    "hd": true,
+    "optional_ui": true,
+    "ui_off_on": true,
+    "verified_pngs": 26712,
+    "downloaded_from_public_github": false,
+    "empty_cache": false,
+    "live_game_touched": false,
+    "real_emulator_started": false,
+    "isolated_process_guard_override": true,
+    "ui_clicks_tested": false
+  },
+  "standalone_patch_application": {
+    "status": "PASS",
+    "target": {
+      "bytes": 1979887616,
+      "sha256": "A144F8ABF4951FB8FAF4D2E6C8B4DE034C85B27E287E9AF8ADB67B20FB3FF0CE"
+    },
+    "input_package": {
+      "name": "Fate-Extra-Korean-Base-v8i.zip",
+      "bytes": 247456720,
+      "sha256": "BDD103B1B68EE01BDDC8710D6E8EF9E70639AFF85C0543B49DE5E91357469A4F"
+    },
+    "script_sha256": "5B017CCD2B289AB4B7677D16E3C207CD984D038E433FBD41F5270589134F88CD"
+  },
+  "published": false,
+  "packages": {
+    "base": {
+      "name": "Fate-Extra-Korean-Base-v8i.zip",
+      "bytes": 247456720,
+      "sha256": "BDD103B1B68EE01BDDC8710D6E8EF9E70639AFF85C0543B49DE5E91357469A4F"
+    },
+    "hd": [
+      {
+        "name": "Fate-Extra-Korean-HD-v55.z01",
+        "bytes": 1900000000,
+        "sha256": "43547C98E2A5D697E92978FBD7307632443F0D1C2DF262C455EA1538C5F501B4"
+      },
+      {
+        "name": "Fate-Extra-Korean-HD-v55.zip",
+        "bytes": 153881087,
+        "sha256": "AC36063A0207734A6DE7A8E83025593DC5954AF5C1395C0A85E4FB4954332BC6"
+      }
+    ],
+    "ui": {
+      "name": "Fate-Extra-Korean-UI-v5.zip",
+      "bytes": 8660229,
+      "sha256": "D496A06C3A2B4FAD2D0A1A02CCCF6AD1377F7C3EC4C4855A871E56AF5427CFC9"
+    },
+    "launcher": {
+      "name": "Fate-Extra-Korean-Launcher-v1.6.0.zip",
+      "bytes": 849623,
+      "sha256": "5E0FC830F59E271F278D00B1E7D4F57F140188BAD44CBC747F2E56F021268031"
+    },
+    "ui_only": {
+      "name": "Fate-Extra-Korean-UI-only-v4.zip",
+      "bytes": 1552171,
+      "sha256": "5DD995A43DD2E79AA538C0E97A2DF6756609115F6D08840B366F90010CA01D67"
+    },
+    "installed_pngs": 26712,
+    "artwork_and_mapping_changes": 0,
+    "compatibility_metadata_changed": true
+  },
+  "public_installation": "not run; not published",
+  "limitations": [
+    "Saber/Archer projector scene passed only in automated isolated-emulator runs; no user hand A/B",
+    "No full-route or hardware PSP verification",
+    "Unpublished hardware build v8h-psp carries the same PRELOAD growth and is not fixed by this release"
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "repository": "sirecoymarsh/fate-extra-korean-patch",
+  "release_tag": "v8i-hd-v55-ui-v5",
+  "minimum_launcher": "1.4.2",
+  "base_version": "v8i",
+  "hd_version": "HD-v55",
+  "base_root": "Fate-Extra-Korean-Base-v8i",
+  "hd_root": "Fate-Extra-Korean-HD-v55",
+  "patch_name": "Fate-Extra-Korean-v8i.xdelta",
+  "source": {
+    "bytes": 1280933888,
+    "sha256": "60399D610CBCDA96601374A2E621A22BB58505C403C6FA4221EEC5E87235667B"
+  },
+  "target": {
+    "bytes": 1979887616,
+    "sha256": "A144F8ABF4951FB8FAF4D2E6C8B4DE034C85B27E287E9AF8ADB67B20FB3FF0CE"
+  },
+  "base_asset": {
+    "name": "Fate-Extra-Korean-Base-v8i.zip",
+    "bytes": 247456720,
+    "sha256": "BDD103B1B68EE01BDDC8710D6E8EF9E70639AFF85C0543B49DE5E91357469A4F"
+  },
+  "hd_assets": [
+    {
+      "name": "Fate-Extra-Korean-HD-v55.z01",
+      "bytes": 1900000000,
+      "sha256": "43547C98E2A5D697E92978FBD7307632443F0D1C2DF262C455EA1538C5F501B4"
+    },
+    {
+      "name": "Fate-Extra-Korean-HD-v55.zip",
+      "bytes": 153881087,
+      "sha256": "AC36063A0207734A6DE7A8E83025593DC5954AF5C1395C0A85E4FB4954332BC6"
+    }
+  ],
+  "notes": "3회전 종료 후 시청각실 영사기 장면 무한 로딩 수정(파일 로더 힙 +512KB, EBOOT 4바이트). 세이버·아처 자동 시험 통과. HD·UI 이미지는 이전과 동일. 런처 1.6.0.",
+  "hardware_psp_verified": false,
+  "hd_textures_ini_sha256": "8619B92BC1294483AAE4A7AD120E1447CB651536785EC760FE698CD984FEC29F",
+  "ui_version": "UI-v5",
+  "ui_root": "Fate-Extra-Korean-UI-v5",
+  "ui_original_ini_sha256": "8619B92BC1294483AAE4A7AD120E1447CB651536785EC760FE698CD984FEC29F",
+  "ui_korean_ini_sha256": "219C423B2CEE14970A81E8F1653DC919748379D82F7009C75AF6108900064337",
+  "ui_asset": {
+    "name": "Fate-Extra-Korean-UI-v5.zip",
+    "bytes": 8660229,
+    "sha256": "D496A06C3A2B4FAD2D0A1A02CCCF6AD1377F7C3EC4C4855A871E56AF5427CFC9"
+  }
+}
